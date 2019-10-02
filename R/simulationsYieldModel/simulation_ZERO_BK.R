@@ -1,11 +1,11 @@
 #Scripts to simulate  TZA using the yield response model
 
 
+source("R/startup.R")
+
 #### \\ Fertilizer amount table for BAU and BK ####
 BAU_BK_inputs <- read.csv('Data/BAU_BK_inputs.csv')
 
-#### \\ Yield repsonse model
-source("R/fert_response_model.R")
 
 #### +++++++ SIMULATION +++++++ ####
 for (COUNTRY in c('TZA')){
@@ -26,14 +26,10 @@ for (COUNTRY in c('TZA')){
                   rasters_input$accsq,
                   rasters_input$slope)
   
-  
   #Export only csv of results
   data.table::fwrite(data.frame(yield), paste0('results/yield_response/', COUNTRY, '_ZERO_yield.csv'))
-
-  
   
   ########## \\ Blanket Scenario ###############
-  
   N_input <- BAU_BK_inputs [BAU_BK_inputs$SCENARIO == 'BK' & BAU_BK_inputs$COUNTRY == COUNTRY, "N"]
   #Running yield model
   yield <- mapply(FUN = yield_response,
@@ -43,8 +39,8 @@ for (COUNTRY in c('TZA')){
                   rasters_input$gridacid,
                   rasters_input$acc,
                   rasters_input$accsq,
-                  rasters_input$slope)  #Export only csv of results
-  data.table::fwrite(data.frame(yield), paste0('Results/yield_response/', COUNTRY, '_BK_yield.csv'))
+                  rasters_input$slope)
+  data.table::fwrite(data.frame(yield), paste0('results/yield_response/', COUNTRY, '_BK_yield.csv'))
 }
 
 
@@ -52,6 +48,7 @@ for (COUNTRY in c('TZA')){
 rm(list=ls())
 
 library(terra)
+library(tidyverse)
 source("R/buildraster.R")
 
 #### \\ Fertilizer amount table for BAU and BK ####

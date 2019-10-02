@@ -26,21 +26,26 @@ SPAM <- rast("data/soil/spam2010v1r0_global_physical-area_maiz_a_TZA.tif")
 names(SPAM) <- "SPAM"
 
 #### PRICE RASTERS ####
-urea_price <- rast("Data/input_price/TZA_urea_price.tif")/1000  #original units in USD/ton from Camila
+urea_price <- rast("Data/input_price/TZA_urea_price.tif") #USD/kg
 urea_price <- warp(urea_price, gridorc, filename="Data/input_price/TZA_urea_price_warped.tif", overwrite	= TRUE)
 names(urea_price) <- "urea_price"
 
-maize_price <- rast("Data/output_price/TZA_maize_price.tif")
-maize_price <- warp(maize_price, gridorc, filename="Data/input_price/TZA_maize_price_warped.tif", overwrite	= TRUE)
+maize_price <- rast("Data/output_price/pred_maize_price1.tif") / 2292 #/2292 to convert to USD/kg
+maize_price <- warp(maize_price, gridorc, filename="Data/input_price/pred_maize_price1_warped.tif", overwrite	= TRUE)
 names(maize_price) <- "maize_price"
 
-########  MAKE SURE THAT THE PRICES ARE IN CORRECT UNITS USD/KG ######
+
+#### FERTILIZER RECOMMENDATION  ####
+AEZ <- rast("data/admin_and_AEZ/tanzania_national_agro_ecological_zones.tiff")
+names(AEZ) <- "AEZ"
 
 #### \\ Admin and AEZ ####
-#level_1 <- raster("data/admin/gadm36_TZA_1.tif")
+gadm36_TZA_1  <- rast("data/admin_and_AEZ/gadm36_TZA_1.tiff")
 
 #### COMBINING RASTERS TO A TABLE ####
-rasters_input <- cbind(values(gridorc),
+rasters_input <- cbind(values(gadm36_TZA_1),
+                       values(AEZ),
+                       values(gridorc),
                        values(gridacid),
                        values(rain),
                        values(acc),
@@ -54,11 +59,11 @@ rasters_input <- cbind(values(gridorc),
 rasters_input <- rasters_input %>% 
   mutate(index = 1:nrow(rasters_input)) %>% 
   filter(complete.cases(.)) %>% 
-  filter(SPAM>500) %>% 
+  filter(SPAM>300) %>% 
   mutate(loggridorc = log(gridorc),
          lograin = log(rain),
          accsq = acc^2) %>% 
-  select(index, lograin, loggridorc, gridacid, acc, accsq, slope, urea_price, maize_price)
+  select(index, gadm36_TZA_1, AEZ, lograin, loggridorc, gridacid, acc, accsq, slope, urea_price, maize_price)
 
 head(rasters_input)
 
