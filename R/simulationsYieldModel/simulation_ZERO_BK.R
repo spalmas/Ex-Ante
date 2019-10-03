@@ -1,11 +1,13 @@
 #Scripts to simulate  TZA using the yield response model
 
+#### +++++++ SCRIPTS +++++++ ####
+source('R/startup.R')
 
-source("R/startup.R")
+#### +++++++ PACKAGES +++++++ ####
+library(magrittr)
 
 #### \\ Fertilizer amount table for BAU and BK ####
 BAU_BK_inputs <- read.csv('Data/BAU_BK_inputs.csv')
-
 
 #### +++++++ SIMULATION +++++++ ####
 for (COUNTRY in c('TZA')){
@@ -66,16 +68,14 @@ for (COUNTRY in c("TZA")){
     rasters_input$in1price <- rasters_input$urea_price - (min(rasters_input$urea_price) - 0.3) #urea  #official price = 8.76 ETB/kg = 0.3 USD/kg (Boke et al., 2018)
     rasters_input$in2price <- rasters_input$urea_price - (min(rasters_input$urea_price) - 0.38) #NPS  #official price = 10.94 ETB/kg = 0.38 USD/ha  (Boke et al., 2018)
     } else if (COUNTRY == 'TZA'){
-    BK_inputs <-  c('Urea', 'DAP')
-    rasters_input$in1price <- rasters_input$urea_price * 1 #urea
-    rasters_input$in2price <- rasters_input$urea_price * 1.3 #DAP
+    rasters_input$Nprice <- rasters_input$urea_price / 0.46  #0.46 in each kg of urea. This returns the price of a kg of Nitrogen using urea
   }
   
   #### \\ Tables for scenario pixel results
   ZERO <- BK <- rasters_input %>% dplyr::select(index)
   
-  #### \\ Getting kg/ha of fertilizers applied
-  BK_inputs_kg.ha <- BAU_BK_inputs [BAU_BK_inputs$SCENARIO == 'BK' & BAU_BK_inputs$COUNTRY == COUNTRY, BK_inputs]
+  #### \\ Getting kg/ha of fertilizers applied in BK scenario
+  BK$Namount <- BAU_BK_inputs [BAU_BK_inputs$SCENARIO == 'BK' & BAU_BK_inputs$COUNTRY == COUNTRY, "N"]
   
   #### \\ Read BAU and BK yield rasters  ####
   ZERO$yield <- read.csv(paste0('results/yield_response/', COUNTRY, '_ZERO_yield.csv')) %>% as.matrix()
@@ -83,10 +83,7 @@ for (COUNTRY in c("TZA")){
 
   #### \\ Calculating totfertcost rasters ####
   ZERO$totfertcost <- 0
-  BK$totfertcost <- rasters_input$in1price * BK_inputs_kg.ha[[1]] + rasters_input$in2price * BK_inputs_kg.ha[[2]]
-  
-  #### \\ Calculating Namount raster ####
-  BK$Namount <- BAU_BK_inputs %>% filter(SCENARIO == 'BK' & COUNTRY == 'ETH') %>% select(N) %>% as.numeric()
+  BK$totfertcost <- rasters_input$Nprice * BK$Namount
   
   #### \\ Calculating netrev rasters ####
   ZERO['netrev'] <- ZERO$yield * rasters_input$maize_price
