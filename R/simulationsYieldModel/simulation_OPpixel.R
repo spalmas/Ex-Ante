@@ -3,15 +3,15 @@
 #### +++++++ SCRIPTS +++++++ ####
 source('R/startup.R')
 source('R/simulationsYieldModel/fGA_pixel.R')
+source("R/buildraster.R")
 
 #### +++++++ PACKAGES +++++++ ####
 library(magrittr)
 library(terra)
 
-
 #### +++++++ PARALLEL START +++++++ ####
-no_cores <- detectCores()     #number of cores to use in process
-cl <- makeCluster(no_cores, type = 'FORK', outfile = 'cluster_debug_file.txt')  #FORK with only work in unix-based systems
+#no_cores <- detectCores()     #number of cores to use in process
+#cl <- makeCluster(no_cores, type = 'FORK', outfile = 'cluster_debug_file.txt')  #FORK with only work in unix-based systems
 
 #### +++++++ SIMULATION +++++++ #### 
 i <- 1
@@ -23,23 +23,8 @@ for (COUNTRY in c('TZA')){
   #Getting the matrix of rasters data
   rasters_input_all <- read.csv(file = paste0('data/', COUNTRY , '_soilprice_table.csv'))
   
-  #### \\ Input and output prices value ####
-  if(COUNTRY == 'ETH'){
-    BK_inputs <-  c('Urea', 'NPS')
-    fert_massfrac <- all_fert_massfrac[c(1,2),]      #N,P,K Mass fraction for Urea and NPS
-    
-    rasters_input_all$in1price <- rasters_input_all$urea_price - (min(rasters_input_all$urea_price) - 0.3) #urea  #official price = 8.76 ETB/kg = 0.3 USD/kg (Boke et al., 2018)
-    rasters_input_all$in2price <- rasters_input_all$urea_price - (min(rasters_input_all$urea_price) - 0.38) #NPS  #official price = 10.94 ETB/kg = 0.38 USD/ha  (Boke et al., 2018)
-    
-  } else if (COUNTRY == 'TZA'){
-    BK_inputs <-  c('Urea', 'DAP')
-    fert_massfrac <- all_fert_massfrac[1,]      #N,P,K Mass fraction for Urea and DAP
-    
-    rasters_input_all$Nprice <- rasters_input_all$urea_price / 0.46  #0.46 in each kg of urea. This returns the price of a kg of Nitrogen using urea
-  }
-
   # \\ Table for scenario pixel results
-  OPpixel <- rasters_input_all %>% dplyr::select(index, gadm36_TZA_1, AEZ)
+  OPpixel <- rasters_input_all %>% dplyr::select(index, gadm36_TZA_1)
 
   ########## \\ OPpixel OPTIMIZATION ###############
   optim_fGA <- function(rasters_input, ...){
@@ -51,15 +36,15 @@ for (COUNTRY in c('TZA')){
   }
   
   #### \\ Apply the optimization function to every pixel and store it ####
-  OPpixel$Namount <- parApply(cl = cl, X = rasters_input_all, FUN = optim_fGA, MARGIN = 1)
-  #apply(X = rasters_input_all[1:5,], FUN = optim_fGA, MARGIN = 1)  #to test just a few pixels outside the parallel
+  #OPpixel$Namount <- parApply(cl = cl, X = rasters_input_all, FUN = optim_fGA, MARGIN = 1)
+  OPpixel$N_amount <- apply(X = rasters_input_all, FUN = optim_fGA, MARGIN = 1)  #to test just a few pixels outside the parallel
 
   #### \\ Estimate totfertcost  ####
-  OPpixel$totfertcost <- OPpixel$Namount * rasters_input_all$Nprice
+  OPpixel$totfertcost <- OPpixel$N_amount * rasters_input_all$N_price
   
   #### \\ Calculating Yield  ####
   OPpixel$yield <-  mapply(FUN = yield_response,
-                           OPpixel$Namount,   #nitrogen application
+                           OPpixel$N_amount,   #nitrogen application
                            rasters_input_all$lograin,
                            rasters_input_all$loggridorc,
                            rasters_input_all$gridacid,
@@ -71,7 +56,7 @@ for (COUNTRY in c('TZA')){
   OPpixel['netrev'] <- OPpixel$yield * rasters_input_all$maize_price - OPpixel$totfertcost
 
   #### \\ Calculating Percentage change values from ZERO scenario ####
-  ZERO <- read.csv('results/yield_response/ETH_ZERO.csv')
+  ZERO <- read.csv('results/yield_response/TZA_ZERO.csv')
   OPpixel['yield_gain_perc'] <- 100 * (OPpixel$yield - ZERO$yield) / ZERO$yield 
   OPpixel['totfertcost_gain_perc'] <- 100 * (OPpixel$totfertcost - ZERO$totfertcost) / ZERO$totfertcost 
   OPpixel['netrev_gain_perc'] <- 100 * (OPpixel$netrev - ZERO$netrev) / ZERO$netrev
@@ -81,9 +66,9 @@ for (COUNTRY in c('TZA')){
   data.table::fwrite(OPpixel, paste0('results/yield_response/',COUNTRY, "_OPpixel.csv"))
 
   #### \\ Writing rasters
-  template <- rast(paste0('data/soil/', COUNTRY,'_ORCDRC.tif'))
+  template <- rast("data/soil/TZA_ORCDRC_T__M_sd1_1000m.tif")
   writeRaster(buildraster(OPpixel$yield, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPpixel_yield.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPpixel$Namount, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPpixel_Namount.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPpixel$N_amount, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPpixel_N_amount.tif"), overwrite=TRUE)
   writeRaster(buildraster(OPpixel$totfertcost, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPpixel_totfertcost.tif"), overwrite=TRUE)
   writeRaster(buildraster(OPpixel$netrev, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPpixel_netrev.tif"), overwrite=TRUE)
   
@@ -92,7 +77,7 @@ for (COUNTRY in c('TZA')){
 }
 
 #### +++++++ PARALLEL END +++++++ ####
-stopCluster(cl)
+#stopCluster(cl)
 
 #Clean memory
 gc()
