@@ -13,9 +13,6 @@ library(terra)
 #no_cores <- detectCores()     #number of cores to use in process
 #cl <- makeCluster(no_cores, type = 'FORK', outfile = 'cluster_debug_file.txt')  #FORK with only work in unix-based systems
 
-########## MAXIMUM INVESTMENT ALLOWED IN EACH OPTIMIZATION  ###############
-investment_max <- 200   #Max investment (USD/ha)
-
 #### +++++++ SIMULATION +++++++ #### 
 i <- 1
 for (COUNTRY in c('TZA')){
@@ -26,28 +23,35 @@ for (COUNTRY in c('TZA')){
   #Getting the matrix of rasters data
   rasters_input_all <- read.csv(file = paste0('data/', COUNTRY , '_soilprice_table.csv'))
   
-  
+  ########## \\ OPpixel table start ###############
+  OPpixel <- rasters_input_all %>% 
+    dplyr::select(index, N_price, maize_price)
+
   ########## \\ OPpixel OPTIMIZATION ###############
-  optim_pixel <- function(rasters_input, ...){
-    solution <- optimize(f=N_to_netrev, interval=c(0,300), rasters_input = rasters_input, maximum=TRUE)
+  #Maximum investment in Nitrogen
+  investment_max <- 300   #Max investment (USD/ha)
+  
+  optim_pixel <- function(pixel, ...){
+    solution <- optimize(f=N_to_netrev, interval=c(0,200), pixel = pixel, maximum=TRUE)
     return(list(N_kgha = floor(solution$maximum), netrev = solution$objective))
   }
   
   # Apply optimization to each row
-  OPpixel_list <- apply(X = rasters_input_all, FUN = optim_pixel, MARGIN = 1)  #to test just a few pixels outside the parallel
-  
+  OPpixel_list <- apply(X = rasters_input_all, FUN = optim_pixel, MARGIN = 1)  #not returning maximum (using other rows?)
+  #optim_pixel(rasters_input_all[1,])
   #Convert list to table
   OPpixel <- purrr::map_df(OPpixel_list, ~as.data.frame(t(.)))
-  
   #unlist columns
   OPpixel$N_kgha <- OPpixel$N_kgha %>% unlist()
   OPpixel$netrev <- OPpixel$netrev %>% unlist()
   
-  #### \\ Estimate totfertcost  ####
-  OPpixel$totfertcost <- OPpixel$N_kgha * rasters_input_all$N_price
-  
-  #### \\ Adwdwing index vlaue  ####
+  #### \\ Appending columns  ####
   OPpixel$index <- rasters_input_all$index
+  OPpixel$N_price <- rasters_input_all$N_price
+  OPpixel$maize_price <- rasters_input_all$maize_price
+
+  #### \\ Estimate totfertcost  ####
+  OPpixel$totfertcost <- OPpixel$N_kgha * OPpixel$N_price
   
   #### \\ Calculating Yield  ####
   OPpixel$yield <- mapply(FUN = yield_response,
@@ -84,3 +88,4 @@ for (COUNTRY in c('TZA')){
 
 #### +++++++ PARALLEL END +++++++ ####
 #stopCluster(cl)
+head(OPpixel)

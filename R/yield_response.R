@@ -85,6 +85,7 @@ yield_response <- function(N,
     
   #yield calculation
   yield <- N*p_N + 
+    N^2*p_NN+
     lograin*p_lograin +
     intercrop*p_intercrop +
     rotat1*p_rotat1 + 
