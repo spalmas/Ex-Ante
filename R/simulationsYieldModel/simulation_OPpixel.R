@@ -6,12 +6,13 @@ source('R/simulationsYieldModel/N_to_netrev.R')
 source("R/buildraster.R")
 
 #### +++++++ PACKAGES +++++++ ####
+library(GA)
 library(magrittr)
 library(terra)
 
 #### +++++++ PARALLEL START +++++++ ####
-#no_cores <- detectCores()     #number of cores to use in process
-#cl <- makeCluster(no_cores, type = 'FORK', outfile = 'cluster_debug_file.txt')  #FORK with only work in unix-based systems
+no_cores <- detectCores()     #number of cores to use in process
+cl <- makeCluster(no_cores, type = 'FORK', outfile = 'cluster_debug_file.txt')  #FORK with only work in unix-based systems
 
 #### +++++++ SIMULATION +++++++ #### 
 i <- 1
@@ -32,13 +33,18 @@ for (COUNTRY in c('TZA')){
   investment_max <- 300   #Max investment (USD/ha)
   
   optim_pixel <- function(pixel, ...){
-    solution <- optimize(f=N_to_netrev, interval=c(0,200), pixel = pixel, maximum=TRUE)
-    return(list(N_kgha = floor(solution$maximum), netrev = solution$objective))
+    solution <- ga(type="real-valued",
+                   fitness=N_to_netrev,
+                   lower=0, upper=200,suggestions=c(0),
+                   popSize=40, maxiter=50,
+                   monitor=FALSE,parallel=TRUE,
+                   pixel=pixel)
+    return(list(N_kgha = floor(solution@solution[1]), netrev = solution@fitnessValue))
   }
   
-  # Apply optimization to each row
+    # Apply optimization to each row
   OPpixel_list <- apply(X = rasters_input_all, FUN = optim_pixel, MARGIN = 1)  #not returning maximum (using other rows?)
-  #optim_pixel(rasters_input_all[1,])
+  #optim_pixel(rasters_input_all[28284,])
   #Convert list to table
   OPpixel <- purrr::map_df(OPpixel_list, ~as.data.frame(t(.)))
   #unlist columns
@@ -87,5 +93,5 @@ for (COUNTRY in c('TZA')){
 }
 
 #### +++++++ PARALLEL END +++++++ ####
-#stopCluster(cl)
+stopCluster(cl)
 head(OPpixel)
