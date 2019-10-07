@@ -1,23 +1,22 @@
 #' Definition of fitness function for the GA using integers, pixel version
 #'
-#' \code{fGA_pixel} Pixel fitness function for the floor (integer) version
+#' \code{N_to_netrev} Pixel fitness function for the floor (integer) version
 #'
-#' @param N_amount  amount of applied nitrogen (kg/ha)
+#' @param N_kgha  amount of applied nitrogen (kg/ha)
 #' @param siteSoilNutrient
 #' @param ... siteSoilNutrient, fert_price, investment_max
 #' 
 #' @return fitness value
 #'
 #' @examples
-#' fGA_pixel(X=c(1,6), rasters_input = rasters_input, fert_price = fert_price) #example with 200 kg/ha of NPK and 100 kg/ha of urea
-fGA_pixel <- function(N_amount, rasters_input, ...) {
-  #rasters_input <- rasters_input_all[1,]
+#' rasters_input <- read.csv('data/TZA_soilprice_table.csv')[1,]
+#' N_to_netrev(50, rasters_input)
+N_to_netrev <- function(N_kgha, rasters_input, ...) {
   #Converting binary string to fertilizer amounts
-  #X <- c(1,2)
-  N_amount <- floor(N_amount)
+  N_kgha <- floor(N_kgha)
 
   #totfert cost and total ivnestment
-  totfertcost <- rasters_input["N_price"] * N_amount
+  totfertcost <- rasters_input["N_price"] * N_kgha
   
   #if the fertilization cost is higher than the maximum ivestment allowed,
   #stop calculations and return low fitness outcome
@@ -25,16 +24,14 @@ fGA_pixel <- function(N_amount, rasters_input, ...) {
     return(-999999)
   } else {
     #calculate nutrients from fertilizer amount
-    yield <- yield_response(N = N_amount, 
+    yield <- yield_response(N = N_kgha, 
                             lograin = rasters_input["lograin"],
                             loggridorc = rasters_input["loggridorc"],
                             gridacid =  rasters_input["gridacid"],
                             acc = rasters_input["acc"],
-                            accsq= rasters_input["accsq"],
                             slope= rasters_input["slope"])
     
-    gross_rev <- rasters_input['maize_price'] * yield
-    netrev <- gross_rev-totfertcost
+    netrev <- rasters_input['maize_price'] * yield - totfertcost
     return(as.numeric(netrev))  #it should allow for only netrev as return, no??
   }
 }

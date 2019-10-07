@@ -37,7 +37,6 @@ yield_response <- function(N,
                            loggridorc,
                            gridacid,
                            acc,
-                           accsq,
                            slope,
                            intercrop = 0.5741935,   #mean value found in APS Tanzania data
                            rotat1 = 0.0840868,    #mean value found in APS Tanzania data
@@ -106,7 +105,7 @@ yield_response <- function(N,
     loggridorc*p_loggridorc + 
     gridacid*p_gridacid + 
     acc*p_acc + 
-    accsq*p_accsq + 
+    acc^2*p_accsq + 
     slope*p_slope + 
     year*p_year +
     constant

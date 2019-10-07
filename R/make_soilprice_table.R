@@ -13,7 +13,7 @@ gridpH <- rast("data/soil/TZA_PHIHOX_T__M_sd1_1000m.tif")
 gridacid <- gridpH < 65
 names(gridacid) <- "gridacid"
 
-rain <- rast("data/rainfall/chirps-v2_201512-201605_sum.tif") 
+rain <- rast("data/rainfall/chirps-v2_201612-201705_sum_TZA.tif") 
 names(rain) <- "rain"
 
 acc <- rast("data/mktacc/acc.tif") 
@@ -27,8 +27,8 @@ names(SPAM) <- "SPAM"
 
 #### PRICE RASTERS ####
 urea_price <- rast("Data/prices/TZA_urea_price.tif") #USD/kg
-#divide /0.46 to convert to price per kg of N
-N_price <- warp(urea_price/0.46, gridorc, filename="Data/prices/TZA_urea_price_warped.tif", overwrite	= TRUE)
+#divide /0.465 to convert to price per kg of N
+N_price <- warp(urea_price/0.465, gridorc, filename="Data/prices/TZA_urea_price_warped.tif", overwrite	= TRUE)
 names(N_price) <- "N_price"
 
 maize_price <- rast("Data/prices/pred_maize_price1.tif") / 2292 #/2292 to convert to USD/kg
@@ -55,11 +55,10 @@ rasters_input <- rasters_input %>%
   mutate(index = 1:nrow(rasters_input)) %>% 
   filter(complete.cases(.)) %>% 
   mutate(loggridorc = log(gridorc),
-         lograin = log(rain),
-         accsq = acc^2) %>% 
-  select(index, gadm36_TZA_1, lograin, loggridorc, gridacid, acc, accsq, slope, N_price, maize_price)
+         lograin = log(rain)) %>% 
+  dplyr::select(index, gadm36_TZA_1, lograin, loggridorc, gridacid, acc, slope, N_price, maize_price)
 
 head(rasters_input)
 
 #### EXPORTING TABLE TO A FILE  ####
-write.csv(rasters_input, file = paste0('Data/TZA_soilprice_table.csv'))
+data.table::fwrite(rasters_input, file = paste0('Data/TZA_soilprice_table.csv'))

@@ -23,9 +23,6 @@ all_fert_massfrac <-  matrix(c(0.46, 0.0, 0.0,     #Urea nutrients
                                0.18, 0.46, 0.0),      #DAP nutrientss
                              ncol = 3, byrow = TRUE)      #N,P,K Mass fraction for Urea, NPS and DAP
 
-########## MXIMUM INVESTMENT ALLOWED IN EACH OPTIMIZATION  ###############
-investment_max <- 200   #Max investment (USD/ha)
-
 ########## CURRENCY EXCHANGE RATES  ###############
 ex <- data.frame(COUNTRY = c('ETH', 'NGA', 'TZA'),  
                  CURRENCY = c('ETB', 'NGN', 'TZS'),
