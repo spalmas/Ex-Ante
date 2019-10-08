@@ -29,26 +29,13 @@ for (COUNTRY in c('TZA')){
   
   #pixel <- rasters_input_all[23918,]
   optim_pixel <- function(pixel, ...){
-    solution <- optimize(f=N_to_netrev, interval=c(0,200), pixel = pixel, maximum=TRUE)
-    return(list(N_kgha = floor(solution$maximum), netrev = solution$objective))
+    solution <- optimize(f=N_to_netrev, interval=c(-10,200), pixel = pixel, maximum=TRUE)
+    if (solution$maximum<0){solution$maximum <- 0}
+    return(floor(solution$maximum))
   }
   
   # Apply optimization to each row
-  OPpixel_list <- apply(X = rasters_input_all, FUN = optim_pixel, MARGIN = 1)  #not returning maximum (using other rows?)
-  #optim_pixel(rasters_input_all[28284,])
-  #Convert list to table
-  OPpixel <- purrr::map_df(OPpixel_list, ~as.data.frame(t(.)))
-  #unlist columns
-  OPpixel$N_kgha <- OPpixel$N_kgha %>% unlist()
-  OPpixel$netrev <- OPpixel$netrev %>% unlist()
-  
-  #### \\ Appending columns  ####
-  OPpixel$index <- rasters_input_all$index
-  OPpixel$N_price <- rasters_input_all$N_price
-  OPpixel$maize_price <- rasters_input_all$maize_price
-
-  #### \\ Estimate totfertcost  ####
-  OPpixel$totfertcost <- OPpixel$N_kgha * OPpixel$N_price
+  OPpixel$N_kgha <- apply(X = rasters_input_all, FUN = optim_pixel, MARGIN = 1)  #not returning maximum (using other rows?)
   
   #### \\ Calculating Yield  ####
   OPpixel$yield <- mapply(FUN = yield_response,
@@ -59,6 +46,15 @@ for (COUNTRY in c('TZA')){
                           acc = rasters_input_all$acc,
                           slope = rasters_input_all$slope)
   
+  #### \\ Estimate totfertcost  and net revenue####
+  OPpixel$totfertcost <- OPpixel$N_kgha * OPpixel$N_price
+  OPpixel$netrev <- OPpixel$maize_price*OPpixel$yield - OPpixel$totfertcost
+  
+  #### \\ Appending columns  ####
+  OPpixel$index <- rasters_input_all$index
+  OPpixel$N_price <- rasters_input_all$N_price
+  OPpixel$maize_price <- rasters_input_all$maize_price
+
   #### \\ Calculating Percentage change values from ZERO scenario ####
   ZERO <- read.csv(paste0('results/yield_response/',COUNTRY,'_ZERO.csv'))
   OPpixel['yield_gain_perc'] <- 100 * (OPpixel$yield - ZERO$yield) / ZERO$yield 
