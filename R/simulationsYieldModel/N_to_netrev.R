@@ -11,6 +11,7 @@
 #' pixel <- read.csv('data/TZA_soilprice_table.csv')[1,]
 #' N_to_netrev(70, pixel)
 N_to_netrev <- function(N_kgha, pixel, ...) {
+  if(N_kgha<0){stop("Applied nitrogen can't be negative")}
   #Converting binary string to fertilizer amounts
   N_kgha <- floor(N_kgha)
 
@@ -20,7 +21,7 @@ N_to_netrev <- function(N_kgha, pixel, ...) {
   #if the fertilization cost is higher than the maximum ivestment allowed,
   #stop calculations and return low fitness outcome
   if(totfertcost > investment_max){   #investment_max is in startup.R
-    return(-999999)
+    return(-999)
   } else {
     #calculate nutrients from fertilizer amount
     yield <- yield_response(N = N_kgha, 

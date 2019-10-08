@@ -6,13 +6,8 @@ source('R/simulationsYieldModel/N_to_netrev.R')
 source("R/buildraster.R")
 
 #### +++++++ PACKAGES +++++++ ####
-library(GA)
 library(magrittr)
 library(terra)
-
-#### +++++++ PARALLEL START +++++++ ####
-no_cores <- detectCores()     #number of cores to use in process
-cl <- makeCluster(no_cores, type = 'FORK', outfile = 'cluster_debug_file.txt')  #FORK with only work in unix-based systems
 
 #### +++++++ SIMULATION +++++++ #### 
 i <- 1
@@ -32,17 +27,13 @@ for (COUNTRY in c('TZA')){
   #Maximum investment in Nitrogen
   investment_max <- 300   #Max investment (USD/ha)
   
+  #pixel <- rasters_input_all[23918,]
   optim_pixel <- function(pixel, ...){
-    solution <- ga(type="real-valued",
-                   fitness=N_to_netrev,
-                   lower=0, upper=200,suggestions=c(0),
-                   popSize=40, maxiter=50,
-                   monitor=FALSE,parallel=TRUE,
-                   pixel=pixel)
-    return(list(N_kgha = floor(solution@solution[1]), netrev = solution@fitnessValue))
+    solution <- optimize(f=N_to_netrev, interval=c(0,200), pixel = pixel, maximum=TRUE)
+    return(list(N_kgha = floor(solution$maximum), netrev = solution$objective))
   }
   
-    # Apply optimization to each row
+  # Apply optimization to each row
   OPpixel_list <- apply(X = rasters_input_all, FUN = optim_pixel, MARGIN = 1)  #not returning maximum (using other rows?)
   #optim_pixel(rasters_input_all[28284,])
   #Convert list to table
@@ -93,5 +84,5 @@ for (COUNTRY in c('TZA')){
 }
 
 #### +++++++ PARALLEL END +++++++ ####
-stopCluster(cl)
+#stopCluster(cl)
 head(OPpixel)
