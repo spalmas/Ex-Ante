@@ -1,0 +1,140 @@
+---
+title: "Estimate farm output prices for Tanzania"
+author: "Sebastian Palmas"
+date:  "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+
+The price of maize in the farms is lower in areas farther away from markets because the cost of transportation of the production. In this case, we assume that for each km, the cost of moving maize is 0.01 USD/kg. Therefore, the price on farms will be the maize price at the nearest market minus the transportation cost from the farm to the market.
+
+I will do the analysis at 1km resoltion.
+
+The market location and their output value will serve as end points for a cumulative cost analysis.
+
+## Packages and scripts
+```{r}
+library(terra)
+library(magrittr)
+```
+
+## Getting output prices at towns centers
+We first need the predicted maize prices at market locations. We also need to bring the maize_price raster to 1km resolution by aggregating using a mean of the cells.
+
+```{r, eval=FALSE}
+maize_price <- rast("F:/Work/MaizePricePredictions/TZA/pred_maize_price1.tif") / 2292 #/2292 to convert to USD/kg
+#Converting to 1km resolution
+maize_price <- aggregate(maize_price, fact=4, filename="../data/prices/pred_maize_price1_1km.tif", overwrite=TRUE)
+
+```
+```{r}
+maize_price <- rast("../data/prices/pred_maize_price1_1km.tif")
+plot(maize_price, main="Market maize prices in Tanzania")
+```
+
+We then need to extract maize prices for the locations of the GRUMP towns.
+
+Towns were obtained from the GRUMP database: Center for International Earth Science Information Network - CIESIN - Columbia University, CUNY Institute for Demographic Research - CIDR, International Food Policy Research Institute - IFPRI, The World Bank, and Centro Internacional de Agricultura Tropical - CIAT. 2017. Global Rural-Urban Mapping Project, Version 1 (GRUMPv1): Settlement Points, Revision 01. Palisades, NY: NASA Socioeconomic Data and Applications Center (SEDAC). https://doi.org/10.7927/H4BC3WG1. Accessed 23 10 2019.
+
+```{r}
+grump <- vect("F:/Work/grump-v1-settlement-points-rev01-shp/global_settlement_points_v1.01_TZA_CitiesAdded.shp") %>% 
+  project("+proj=laea +lat_0=5 +lon_0=20 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs")
+
+maize_price_grump <- extract(maize_price, grump, fun=mean, na.rm=TRUE) %>% unlist()
+
+#the extract function is returning some NA values, I will complete the list with a mean of the other values
+maize_price_grump[is.na(maize_price_grump)] <- mean(maize_price_grump, na.rm=TRUE)
+
+#We'll export the predicted price for the markets for validation
+market_price <- cbind(grump$Name1, round(maize_price_grump, digits = 4))
+write.csv(market_price, file = "../data/prices/maize_market_price.csv")
+
+```
+
+
+
+# Prices to markets 
+The cost of moving though each pixel is 0.01 USD/kg/km. We need to create a transition matrix assigning this value to each pixel. The `gdistance` package requires a RasterLayer object. We will estimate the farm cost like this:
+
+* Calculate distance from every market
+
+* Use the formula of: marketprice(USD/kg) - 0.01(USD/kg/km) * distance (km) to calculate the prices in each pixel. This is using regular raster algebra in the `terra` package
+
+## Calculate farm price for every market
+* pred_maize_price1_1km.tif is expressed in USD/kg
+* Transportation cost is expressed in USD/kg/km.
+* Distance is expressed km. `distancefromPoints` function calculates the distance in meters. I divide it by 1000 to get the scale in kilometers.
+
+Using the formule maize_price-t_cost*distance results in the price at the farm_gate to get to that point
+
+```{r, message=FALSE}
+library(raster)
+maize_price <- raster("../data/prices/pred_maize_price1_1km.tif") 
+
+xy <- cbind(geom(grump)$x, geom(grump)$y)
+
+for(point_n in seq_along(grump)){
+  #point_n <- 1 # to test
+  d_point <- distanceFromPoints(object=maize_price, xy=xy[point_n,])
+  
+  #to convert from m to km
+  d_point <- d_point/1000 
+  
+  t_cost <- 0.001 #transportation cost USD/kg/km
+  
+  #calculate the farmcate price
+  maize_price_d_point <- maize_price_grump[[point_n]] - t_cost*d_point
+  
+  #write the raster to a file
+  writeRaster(maize_price_d_point,
+              filename=paste0("../data/prices/pricetoMarket/maize_price_farmgate_point",point_n,".tif"),
+              overwrite=TRUE)
+}
+
+```
+
+```{r}
+plot(maize_price_d_point, main="Farm price if selling in market #59")
+```
+
+
+## What is the maximum cost between all market prices
+Farmers will sell their produce to the highest bidder. Picking the maximum price across the possibilities. They won't send their produce very far away and lose monet
+```{r}
+#list all raster files
+files <- list.files(path = "../data/prices/pricetoMarket/",
+                    pattern = ".tif",full.names=TRUE)
+
+#combine all rasters
+maize_price_points <- rast(files)
+
+#getting the maximum price
+maize_price_points_max <- max(maize_price_points)
+
+#write raster to file
+writeRaster(maize_price_points_max,
+            filename="../data/prices/maize_price_farmgate.tif",
+            overwrite=TRUE)
+```
+
+
+
+```{r, echo=FALSE}
+library(geodata)
+adm <- gadm("TZA", level = 1, path=".") %>%
+  project("+proj=laea +lat_0=5 +lon_0=20 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs")
+
+plot(maize_price_points_max, main ="Maximum available farm price")
+lines(adm)
+```
+
+
+What if we delete all negative values
+
+```{r}
+plot(maize_price_points_max,
+     main ="Maximum available farm price, removing negative values",
+     zlim	=c(0,minmax(maize_price_points_max)[2]))
+lines(adm)
+```
+

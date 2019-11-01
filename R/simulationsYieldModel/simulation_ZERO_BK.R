@@ -65,7 +65,7 @@ for (COUNTRY in c("TZA")){
   rasters_input <- read.csv(file = paste0('data/', COUNTRY , '_soilprice_table.csv'), header=TRUE)
 
   #### \\ Tables for scenario pixel results
-  ZERO <- BK <- rasters_input %>% dplyr::select(index, gadm36_TZA_1, N_price, maize_price)
+  ZERO <- BK <- rasters_input %>% dplyr::select(index, gadm36_TZA_1, N_price, maize_price_farmgate)
   
   #### \\ Getting kg/ha of fertilizers applied in BK scenario
   BK$N_kgha <- BAU_BK_inputs [BAU_BK_inputs$SCENARIO == 'BK' & BAU_BK_inputs$COUNTRY == COUNTRY, "N"]
@@ -77,20 +77,20 @@ for (COUNTRY in c("TZA")){
   #### \\ Calculating totfertcost netrevenue for ZERO ####
   ZERO <- ZERO %>% 
     mutate(totfertcost = 0,
-           netrev = yield * maize_price
+           netrev = yield * maize_price_farmgate
     )
   
   #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for BK ####
   BK <- BK %>% 
     mutate(totfertcost=N_price*N_kgha,
-           netrev = maize_price-totfertcost,
+           netrev = maize_price_farmgate-totfertcost,
            yield_gain_perc = 100*(yield-ZERO$yield)/ZERO$yield,
            totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
            netrev_gain_perc = 100*(netrev-ZERO$netrev)/ZERO$netrev,
            mp=mp(yield_f=yield, yield_nf=ZERO$yield, N_kgha_f=N_kgha,N_kgha_nf=0),
-           ap=ap(yield_f=yield, yield_nf=ZERO$yield, output_price=maize_price, N_kgha=N_kgha, input_price=N_price),
-           mcvr=mcvr(output_price=maize_price, mp, input_price=N_price),
-           acvr=acvr(output_price=maize_price, ap, input_price=N_price)
+           ap=ap(yield_f=yield, yield_nf=ZERO$yield, output_price=maize_price_farmgate, N_kgha=N_kgha, input_price=N_price),
+           mcvr=mcvr(output_price=maize_price_farmgate, mp, input_price=N_price),
+           acvr=acvr(output_price=maize_price_farmgate, ap, input_price=N_price)
     )
   
   #### \\ Writing table ####
