@@ -24,6 +24,6 @@ N_to_netrev <- function(N_kgha, pixel, ...) {
                           acc = pixel[["acc"]],
                           slope= pixel[["slope"]])
   
-  netrev <- pixel[['maize_price']] * yield - totfertcost
+  netrev <- pixel[['maize_price_farmgate']] * yield - totfertcost
   return(netrev)  #it should allow for only netrev as return, no??
 }

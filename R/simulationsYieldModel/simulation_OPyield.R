@@ -23,7 +23,7 @@ for (COUNTRY in c('TZA')){
   
   ########## \\ OPyield table start ###############
   OPyield <- rasters_input_all %>% 
-    dplyr::select(index, gadm36_TZA_1, N_price, maize_price)
+    dplyr::select(index, gadm36_TZA_1, N_price, maize_price_farmgate)
 
   ########## \\ OPyield OPTIMIZATION ###############
   #pixel <- rasters_input_all[23918,]
@@ -53,36 +53,36 @@ for (COUNTRY in c('TZA')){
                           slope = rasters_input_all$slope)
   
   #### \\ Reading ZERO results to calculate changes ####
-  ZERO <- read.csv(paste0('results/yield_response/',COUNTRY,'_ZERO.csv'))
+  ZERO <- read.csv(paste0('results/tif/',COUNTRY,'_ZERO.csv'))
 
     #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for OPyield ####
   OPyield <- OPyield %>% 
     mutate(totfertcost = N_kgha * N_price,
-           netrev = maize_price*yield - totfertcost,
+           netrev = maize_price_farmgate*yield - totfertcost,
            yield_gain_perc = 100*(yield-ZERO$yield)/ZERO$yield,
            totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
            netrev_gain_perc = 100*(netrev-ZERO$netrev)/ZERO$netrev,
            mp=mp(yield_f=yield, yield_nf=ZERO$yield, N_kgha_f=N_kgha,N_kgha_nf=0),
-           ap=ap(yield_f=yield, yield_nf=ZERO$yield, output_price=maize_price, N_kgha=N_kgha, input_price=N_price),
-           mcvr=mcvr(output_price=maize_price, mp, input_price=N_price),
-           acvr=acvr(output_price=maize_price, ap, input_price=N_price)
+           ap=ap(yield_f=yield, yield_nf=ZERO$yield, output_price=maize_price_farmgate, N_kgha=N_kgha, input_price=N_price),
+           mcvr=mcvr(output_price=maize_price_farmgate, mp, input_price=N_price),
+           acvr=acvr(output_price=maize_price_farmgate, ap, input_price=N_price)
     )
   
   #### +++++++ WRITING RESULTS FILES +++++++ ####
   #### \\ Writing table of pixel results
-  data.table::fwrite(OPyield, paste0('results/yield_response/', COUNTRY, "_OPyield.csv"))
+  data.table::fwrite(OPyield, paste0('results/tif/', COUNTRY, "_OPyield.csv"))
   
   #### \\ Writing rasters
   template <- rast("data/soil/TZA_ORCDRC_T__M_sd1_1000m.tif")
-  writeRaster(buildraster(OPyield$yield, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_yield.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$N_kgha, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_N_kgha.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$totfertcost, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_totfertcost.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$netrev, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_netrev.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$yield_gain_perc, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_yield_gain_perc.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$totfertcost_gain_perc, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_totfertcost_gain_perc.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$netrev_gain_perc, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_netrev_gain_perc.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$mcvr, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_mcvr.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$acvr, rasters_input_all, template), filename=paste0('results/yield_response/',COUNTRY, "_OPyield_acvr.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$yield, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_yield.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$N_kgha, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_N_kgha.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$totfertcost, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_totfertcost.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$netrev, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_netrev.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$yield_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_yield_gain_perc.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$totfertcost_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_totfertcost_gain_perc.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$netrev_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_netrev_gain_perc.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$mcvr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_mcvr.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$acvr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_acvr.tif"), overwrite=TRUE)
   #### +++++++ TIMING +++++++ ####
   print(paste0(COUNTRY, ': ', Sys.time() - t0))
 }

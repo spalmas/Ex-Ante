@@ -30,7 +30,7 @@ for (COUNTRY in c('TZA')){
                   slope = rasters_input$slope)
   
   #Export only csv of results
-  data.table::fwrite(data.frame(yield), paste0('results/yield_response/', COUNTRY, '_ZERO_yield.csv'))
+  data.table::fwrite(data.frame(yield), paste0('results/tif/', COUNTRY, '_ZERO_yield.csv'))
   
   ########## \\ Blanket Scenario ###############
   N_kgha <- BAU_BK_inputs [BAU_BK_inputs$SCENARIO == 'BK' & BAU_BK_inputs$COUNTRY == COUNTRY, "N"]
@@ -42,7 +42,7 @@ for (COUNTRY in c('TZA')){
                   gridacid = rasters_input$gridacid,
                   acc = rasters_input$acc,
                   slope = rasters_input$slope)
-  data.table::fwrite(data.frame(yield), paste0('results/yield_response/', COUNTRY, '_BK_yield.csv'))
+  data.table::fwrite(data.frame(yield), paste0('results/tif/', COUNTRY, '_BK_yield.csv'))
 }
 
 
@@ -71,8 +71,8 @@ for (COUNTRY in c("TZA")){
   BK$N_kgha <- BAU_BK_inputs [BAU_BK_inputs$SCENARIO == 'BK' & BAU_BK_inputs$COUNTRY == COUNTRY, "N"]
   
   #### \\ Read BAU and BK yield rasters  ####
-  ZERO$yield <- read.csv(paste0('results/yield_response/', COUNTRY, '_ZERO_yield.csv'), header = TRUE)[,1]
-  BK$yield <- read.csv(paste0('results/yield_response/', COUNTRY, '_BK_yield.csv'), header = TRUE)[,1]
+  ZERO$yield <- read.csv(paste0('results/tif/', COUNTRY, '_ZERO_yield.csv'), header = TRUE)[,1]
+  BK$yield <- read.csv(paste0('results/tif/', COUNTRY, '_BK_yield.csv'), header = TRUE)[,1]
 
   #### \\ Calculating totfertcost netrevenue for ZERO ####
   ZERO <- ZERO %>% 
@@ -94,22 +94,22 @@ for (COUNTRY in c("TZA")){
     )
   
   #### \\ Writing table ####
-  data.table::fwrite(ZERO, paste0('results/yield_response/',COUNTRY, "_ZERO.csv"))
-  data.table::fwrite(BK, paste0('results/yield_response/',COUNTRY, "_BK.csv"))
+  data.table::fwrite(ZERO, paste0('results/tif/',COUNTRY, "_ZERO.csv"))
+  data.table::fwrite(BK, paste0('results/tif/',COUNTRY, "_BK.csv"))
 
   #### \\ Writing rasters ####
   template <- rast(paste0('data/soil/', COUNTRY,'_ORCDRC_T__M_sd1_1000m.tif'))
-  writeRaster(buildraster(ZERO$yield, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_ZERO_yield.tif"), overwrite=TRUE)
-  writeRaster(buildraster(ZERO$totfertcost, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_ZERO_totfertcost.tif"), overwrite=TRUE)
-  writeRaster(buildraster(ZERO$netrev, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_ZERO_netrev.tif"), overwrite=TRUE)
+  writeRaster(buildraster(ZERO$yield, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_ZERO_yield.tif"), overwrite=TRUE)
+  writeRaster(buildraster(ZERO$totfertcost, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_ZERO_totfertcost.tif"), overwrite=TRUE)
+  writeRaster(buildraster(ZERO$netrev, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_ZERO_netrev.tif"), overwrite=TRUE)
   
-  writeRaster(buildraster(BK$yield, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_yield.tif"), overwrite=TRUE)
-  writeRaster(buildraster(BK$N_kgha, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_N_kgha.tif"), overwrite=TRUE)
-  writeRaster(buildraster(BK$totfertcost, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_totfertcost.tif"), overwrite=TRUE)
-  writeRaster(buildraster(BK$netrev, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_netrev.tif"), overwrite=TRUE)
-  writeRaster(buildraster(BK$yield_gain_perc, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_yield_gain_perc.tif"), overwrite=TRUE)
-  writeRaster(buildraster(BK$totfertcost_gain_perc, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_totfertcost_gain_perc.tif"), overwrite=TRUE)
-  writeRaster(buildraster(BK$netrev_gain_perc, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_netrev_gain_perc.tif"), overwrite=TRUE)
-  writeRaster(buildraster(BK$mcvr, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_mcvr.tif"), overwrite=TRUE)
-  writeRaster(buildraster(BK$acvr, rasters_input, template), filename=paste0('results/yield_response/',COUNTRY, "_BK_acvr.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$yield, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_yield.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$N_kgha, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_N_kgha.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$totfertcost, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_totfertcost.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$netrev, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_netrev.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$yield_gain_perc, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_yield_gain_perc.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$totfertcost_gain_perc, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_totfertcost_gain_perc.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$netrev_gain_perc, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_netrev_gain_perc.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$mcvr, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_mcvr.tif"), overwrite=TRUE)
+  writeRaster(buildraster(BK$acvr, rasters_input, template), filename=paste0('results/tif/',COUNTRY, "_BK_acvr.tif"), overwrite=TRUE)
 }
