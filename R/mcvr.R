@@ -1,10 +1,15 @@
 #' Fertilizer profitability formulas
 #' * Marginal physical product (mp)
-#' * Marginal vlaue cost ratio (mcvr)
+#' * Average physical product (ap)
+#' * Average value cost ratio (acvr)
+#' * Marginal value cost ratio (mcvr)
 #'
 #' \code{mcvr} 
 #'
-#' @param pixel
+#' @param yield_nf,yield_f yield from of non-fertilized and fertilized areas (kg/ha)
+#' @param N_kgha_nf,N_kgha_f Nitrogen applied in non-fertilized and fertilized areas  (kg/ha)
+#' @param output_price  #farmgate price of crop ($/kg)
+#' @param input_price  #price of N ($/kg)
 #' 
 #' @references  
 #'
