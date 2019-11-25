@@ -46,6 +46,11 @@ gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36
 #gdalwarp  -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite CGIAR-SRTM/srtm_TZA_merged.tif Ex-Ante/data/admin_and_AEZ/tanzania_national_agro_ecological_zones.tiff
 #dalinfo Ex-Ante/data/admin_and_AEZ/tanzania_national_agro_ecological_zones.tiff
 #gdal_rasterize  -a SenkoroREC -te  29.3271675 -11.7456951 40.4451370 -0.9857875 -ts 4615 4466 Tanzania/tanzania_national_agro_ecological_zones/tanzania_national_agro_ecological_zones.shp Ex-Ante/data/admin_and_AEZ/tanzania_national_agro_ecological_zones_SenkoroREC.tiff
+
+######################################
+#### POPULATION ####
+#original data with SPATIAL RESOLUTION: 0.00833333 decimal degrees (approx 1km at the equator)
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite WorldPop/Africa/AFR_PPP_2020_adj_v2.tif WorldPop/Africa/AFR_PPP_2020_adj_v2_TZA.tif
   
 ######################################
 #### RASTERIZE ADMIN1  ####

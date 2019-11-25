@@ -47,8 +47,11 @@ for (COUNTRY in c('TZA')){
                            acc = rasters_input_all$acc,
                            slope = rasters_input_all$slope)
   
+  #remove Inf values
+  OPnetrev$yield[is.infinite(OPnetrev$yield)] <- NA
+  
   #### \\ Reading ZERO results to calculate changes ####
-  ZERO <- read.csv(paste0('results/tif/',COUNTRY,'_ZERO.csv'))
+  ZERO <- read.csv(paste0('results/tables/',COUNTRY,'_ZERO.csv'))
   
   #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for OPnetrev ####
   OPnetrev <- OPnetrev %>% 
@@ -57,15 +60,22 @@ for (COUNTRY in c('TZA')){
            yield_gain_perc = 100*(yield-ZERO$yield)/ZERO$yield,
            totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
            netrev_gain_perc = 100*(netrev-ZERO$netrev)/ZERO$netrev,
+           ap=ap(yield=yieldN_kgha=N_kgha),
            mp=mp(yield_f=yield, yield_nf=ZERO$yield, N_kgha_f=N_kgha,N_kgha_nf=0),
-           ap=ap(yield_f=yield, yield_nf=ZERO$yield, output_price=maize_price_farmgate, N_kgha=N_kgha, input_price=N_price),
-           mcvr=mcvr(output_price=maize_price_farmgate, mp, input_price=N_price),
-           acvr=acvr(output_price=maize_price_farmgate, ap, input_price=N_price)
-    )
+           avcr=avcr(output_price=maize_price_farmgate, ap, input_price=N_price),
+           mvcr=mvcr(output_price=maize_price_farmgate, mp, input_price=N_price))
+  
+  #### +++++++ REMOVING Inf VALUES +++++++ ####
+  #Because some optimization results return a zero N_kg_ha, avcr and mvcr are not properly estimated.
+  #Here we remove all these Inf values from the avcr and mvcr for better plotting
+  OPnetrev$ap[OPnetrev$N_kgha==0] <- NA
+  OPnetrev$mp[OPnetrev$N_kgha==0] <- NA
+  OPnetrev$avcr[OPnetrev$N_kgha==0] <- NA
+  OPnetrev$mvcr[OPnetrev$N_kgha==0] <- NA
   
   #### +++++++ WRITING RESULTS FILES +++++++ ####
   #### \\ Writing table of pixel results
-  data.table::fwrite(OPnetrev, paste0('results/tif/', COUNTRY, "_OPnetrev.csv"))
+  data.table::fwrite(OPnetrev, paste0('results/tables/', COUNTRY, "_OPnetrev.csv"))
   
   #### \\ Writing rasters
   template <- rast("data/soil/TZA_ORCDRC_T__M_sd1_1000m.tif")
@@ -76,8 +86,8 @@ for (COUNTRY in c('TZA')){
   writeRaster(buildraster(OPnetrev$yield_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPnetrev_yield_gain_perc.tif"), overwrite=TRUE)
   writeRaster(buildraster(OPnetrev$totfertcost_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPnetrev_totfertcost_gain_perc.tif"), overwrite=TRUE)
   writeRaster(buildraster(OPnetrev$netrev_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPnetrev_netrev_gain_perc.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPnetrev$mcvr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPnetrev_mcvr.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPnetrev$acvr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPnetrev_acvr.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPnetrev$avcr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPnetrev_avcr.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPnetrev$mvcr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPnetrev_mvcr.tif"), overwrite=TRUE)
   #### +++++++ TIMING +++++++ ####
   print(paste0(COUNTRY, ': ', Sys.time() - t0))
 }

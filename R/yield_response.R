@@ -31,7 +31,7 @@
 #' @return yield (kg/ha)
 #'
 #' @examples
-#' yield_response(N = 0, lograin = 6.8, loggridorc = 2.6, gridacid = 1,acc =900,accsq=810000,slope=2)
+#' yield_response(N = 0, lograin = 6.8, loggridorc = 2.6, gridacid = 1,acc =900,slope=2)
 yield_response <- function(N, 
                            lograin,
                            loggridorc,
@@ -82,7 +82,7 @@ yield_response <- function(N,
   p_slope <- -65.92
   p_year <- 465.6
   constant <- -8228
-    
+  
   #yield calculation
   yield <- N*p_N + 
     N^2*p_NN+
@@ -111,9 +111,8 @@ yield_response <- function(N,
     year*p_year +
     constant
   
-#do not allow negative values
-if (yield<0) yield <- 0
+  #do not allow negative values. -Inf because this is a maximization problem
+  if (yield<0) yield <- -Inf
   
   return(yield)
-  
 }

@@ -24,10 +24,15 @@ names(slope) <- "slope"
 SPAM <- rast("data/soil/spam2010v1r0_global_physical-area_maiz_a_TZA.tif")
 names(SPAM) <- "SPAM"
 
+pop2020 <- rast("data/WorldPop/AFR_PPP_2020_adj_v2_TZA.tif")   #original SPATIAL RESOLUTION: 0.00833333 decimal degrees (approx 1km at the equator)
+names(pop2020) <- "pop2020"
+
 #### PRICE RASTERS ####
-urea_price <- rast("data/prices/TZA_urea_price.tif") #USD/kg
-#divide /0.465 to convert to price per kg of N (46.5% of urea is N)
-N_price <- warp(urea_price/0.465, gridorc)
+#urea_price <- rast("data/prices/TZA_urea_price.tif") #USD/kg#This is the price prediction from Camila. It is way to high. I don't know why
+#N_price <- warp(urea_price/0.465, gridorc)
+
+# I will use a constant N_price for now. $1 USD/kg of N
+N_price <- warp(1+0*gridorc, gridorc)
 names(N_price) <- "N_price"
 
 maize_price_farmgate <- rast("data/prices/maize_price_farmgate.tif")   #USD/kg
@@ -39,6 +44,7 @@ gadm36_TZA_1  <- rast("data/admin_and_AEZ/gadm36_TZA_1.tiff")
 
 #### COMBINING RASTERS TO A TABLE ####
 rasters_input <- cbind(values(gadm36_TZA_1),
+                       values(pop2020),
                        values(gridorc),
                        values(gridacid),
                        values(rain),
@@ -55,7 +61,7 @@ rasters_input <- rasters_input %>%
   filter(complete.cases(.)) %>% 
   mutate(loggridorc = log(gridorc),
          lograin = log(rain)) %>% 
-  dplyr::select(index, gadm36_TZA_1, lograin, loggridorc, gridacid, acc, slope, N_price, maize_price_farmgate)
+  dplyr::select(index, gadm36_TZA_1, pop2020, lograin, loggridorc, gridacid, acc, slope, N_price, maize_price_farmgate)
 
 head(rasters_input)
 

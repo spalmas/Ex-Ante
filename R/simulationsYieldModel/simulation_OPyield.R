@@ -27,6 +27,7 @@ for (COUNTRY in c('TZA')){
 
   ########## \\ OPyield OPTIMIZATION ###############
   #pixel <- rasters_input_all[23918,]
+  #Optimization function
   optim_pixel <- function(pixel, ...){
     solution <- optimize(f=yield_response, interval=c(0,200),
                          lograin=pixel[["lograin"]],
@@ -38,7 +39,6 @@ for (COUNTRY in c('TZA')){
     if (solution$maximum<0 | solution$objective < 0){solution$maximum <- 0}
     return(floor(solution$maximum))
   }
-  #optim_pixel(pixel)
   
   # Apply optimization to each row
   OPyield$N_kgha <- apply(X = rasters_input_all, FUN = optim_pixel, MARGIN = 1)  #not returning maximum (using other rows?)
@@ -52,8 +52,11 @@ for (COUNTRY in c('TZA')){
                           acc = rasters_input_all$acc,
                           slope = rasters_input_all$slope)
   
+  #remove Inf values
+  OPyield$yield[is.infinite(OPyield$yield)] <- NA
+  
   #### \\ Reading ZERO results to calculate changes ####
-  ZERO <- read.csv(paste0('results/tif/',COUNTRY,'_ZERO.csv'))
+  ZERO <- read.csv(paste0('results/tables/',COUNTRY,'_ZERO.csv'))
 
     #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for OPyield ####
   OPyield <- OPyield %>% 
@@ -62,15 +65,23 @@ for (COUNTRY in c('TZA')){
            yield_gain_perc = 100*(yield-ZERO$yield)/ZERO$yield,
            totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
            netrev_gain_perc = 100*(netrev-ZERO$netrev)/ZERO$netrev,
+           ap=ap(yield=yield, N_kgha=N_kgha),
            mp=mp(yield_f=yield, yield_nf=ZERO$yield, N_kgha_f=N_kgha,N_kgha_nf=0),
-           ap=ap(yield_f=yield, yield_nf=ZERO$yield, output_price=maize_price_farmgate, N_kgha=N_kgha, input_price=N_price),
-           mcvr=mcvr(output_price=maize_price_farmgate, mp, input_price=N_price),
-           acvr=acvr(output_price=maize_price_farmgate, ap, input_price=N_price)
-    )
+           avcr=avcr(output_price=maize_price_farmgate, ap, input_price=N_price),
+           mvcr=mvcr(output_price=maize_price_farmgate, mp, input_price=N_price))
+  
+  #### +++++++ REMOVING Inf VALUES +++++++ ####
+  #Because some optimization results return a zero N_kg_ha, avcr and mvcr are not properly estimated.
+  #Here we remove all these Inf values from the avcr and mvcr for better plotting
+  OPyield$ap[OPyield$N_kgha==0] <- NA
+  OPyield$mp[OPyield$N_kgha==0] <- NA
+  OPyield$avcr[OPyield$N_kgha==0] <- NA
+  OPyield$mvcr[OPyield$N_kgha==0] <- NA
+  
   
   #### +++++++ WRITING RESULTS FILES +++++++ ####
   #### \\ Writing table of pixel results
-  data.table::fwrite(OPyield, paste0('results/tif/', COUNTRY, "_OPyield.csv"))
+  data.table::fwrite(OPyield, paste0('results/tables/', COUNTRY, "_OPyield.csv"))
   
   #### \\ Writing rasters
   template <- rast("data/soil/TZA_ORCDRC_T__M_sd1_1000m.tif")
@@ -81,8 +92,8 @@ for (COUNTRY in c('TZA')){
   writeRaster(buildraster(OPyield$yield_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_yield_gain_perc.tif"), overwrite=TRUE)
   writeRaster(buildraster(OPyield$totfertcost_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_totfertcost_gain_perc.tif"), overwrite=TRUE)
   writeRaster(buildraster(OPyield$netrev_gain_perc, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_netrev_gain_perc.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$mcvr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_mcvr.tif"), overwrite=TRUE)
-  writeRaster(buildraster(OPyield$acvr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_acvr.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$avcr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_avcr.tif"), overwrite=TRUE)
+  writeRaster(buildraster(OPyield$mvcr, rasters_input_all, template), filename=paste0('results/tif/',COUNTRY, "_OPyield_mvcr.tif"), overwrite=TRUE)
   #### +++++++ TIMING +++++++ ####
   print(paste0(COUNTRY, ': ', Sys.time() - t0))
 }
