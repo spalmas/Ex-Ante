@@ -1,28 +1,29 @@
 #' Fertilizer profitability formulas
 #'
-#' @param yield_nf,yield_f yield from of non-fertilized and fertilized areas (kg/ha)
-#' @param N_kgha_nf,N_kgha_f Nitrogen applied in non-fertilized and fertilized areas  (kg/ha)
+#' @param yield1,yield0 yield from treatment and from treatment minus one unit of input (kg/ha)
+#' @param N_kgha1,N_kgha0 Nitrogen applied in treatment and in treatment minus one unit  (kg/ha)
 #' @param output_price  #farmgate price of crop ($/kg)
 #' @param input_price  #price of N ($/kg)
 #' 
 #' @references  
 #'
 #' @examples
-#' (mp0 <- mp(100,1000,0,30))
+#' (mp0 <- mp(000,0000,0,30))
 #' mcvr(0.4,mp0, 2)
 
 #Average product
-ap <- function(yield, N_kgha){
-  yield/N_kgha
+ap <- function(yield1, N_kgha1){
+  yield1/N_kgha1
 }
 
 #Marginal product
-mp <- function(yield_nf, yield_f, N_kgha_nf, N_kgha_f){
-  (yield_f-yield_nf)/(N_kgha_f - N_kgha_nf)
+#In ex-ante, the increments of input are in unit of 1, then the DeltaY is just Y1-Y0, but I leave the complete formula just in case is used for other unit increments
+mp <- function(yield1, yield0, N_kgha1, N_kgha0){
+  (yield1-yield0)/(N_kgha1 - N_kgha0)
 }
 
-enr <- function(yield_nf, yield_f, output_price, N_kgha_f, input_price){
-  (yield_f-yield_f_nf)*output_price - (N_kgha*input_price)
+enr <- function(yield1, yield0, output_price, N_kgha1, input_price){
+  (yield1-yield0)*output_price - (N_kgha1*input_price)
 }
 
 #Average value cost ratio

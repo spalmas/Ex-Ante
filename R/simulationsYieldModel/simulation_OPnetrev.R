@@ -47,8 +47,22 @@ for (COUNTRY in c('TZA')){
                            acc = rasters_input_all$acc,
                            slope = rasters_input_all$slope)
   
+  #### \\ Calculating Yield0 for mvcr  ####
+  #Getting amount of fertilizer with one unit less
+  N_kgha0 <- OPyield$N_kgha-1
+  N_kgha0[N_kgha0<0] <- 0  #just in case some OPyield$N_kgha were negative
+  
+  yield0 <- mapply(FUN = yield_response,
+                   N = N_kgha0,   #nitrogen application kg/ha
+                   lograin = rasters_input_all$lograin,
+                   loggridorc = rasters_input_all$loggridorc,
+                   gridacid = rasters_input_all$gridacid,
+                   acc = rasters_input_all$acc,
+                   slope = rasters_input_all$slope)
+  
   #remove Inf values
   OPnetrev$yield[is.infinite(OPnetrev$yield)] <- NA
+  yield0[is.infinite(yield0)] <- NA
   
   #### \\ Reading ZERO results to calculate changes ####
   ZERO <- read.csv(paste0('results/tables/',COUNTRY,'_ZERO.csv'))
@@ -60,8 +74,8 @@ for (COUNTRY in c('TZA')){
            yield_gain_perc = 100*(yield-ZERO$yield)/ZERO$yield,
            totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
            netrev_gain_perc = 100*(netrev-ZERO$netrev)/ZERO$netrev,
-           ap=ap(yield=yieldN_kgha=N_kgha),
-           mp=mp(yield_f=yield, yield_nf=ZERO$yield, N_kgha_f=N_kgha,N_kgha_nf=0),
+           ap=ap(yield1=yield, N_kgha1=N_kgha),
+           mp=mp(yield1=yield, yield0=yield0, N_kgha1=N_kgha, N_kgha0=N_kgha0),
            avcr=avcr(output_price=maize_price_farmgate, ap, input_price=N_price),
            mvcr=mvcr(output_price=maize_price_farmgate, mp, input_price=N_price))
   
