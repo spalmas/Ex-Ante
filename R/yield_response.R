@@ -2,32 +2,31 @@
 #'
 #' \code{fert_response} Takes a vector of pixel parameters...
 #'
-#' @param N 
-#' @param lograin
+#' @param N applied Nitrogen
+#' @param lograin mm of rain in season (log)
 #' @param loggridorc  
 #' @param gridacid africasoils pH value < 65
 #' @param acc
 #' @param accsq
 #' @param slope
 #' @param intercrop Binary
-#' @param rotat1 Binary
+#' @param rotat1 Crop rotation, binary
 #' @param manure Binary
-#' @param cropres Binary
-#' @param weedings Binary
+#' @param cropres Crop residue, Binary
+#' @param weedings Number of weedings, Binary
 #' @param herbicide_n Binary
 #' @param pesticide_n Binary
-#' @param impseed Binary
+#' @param impseed Improved seed, Binary
 #' @param disease Binary
 #' @param striga Binary
 #' @param logha log(ha)
-#' @param headage Years
-#' @param headagesq Years^2
-#' @param femhead Binary
-#' @param hhsize Persons
-#' @param headeduc Years
-#' @param year
+#' @param headage Age of head of HH, Years
+#' @param headagesq Age of head of HH, squared, Years^2
+#' @param femhead Female head of HH, Binary
+#' @param hhsize Household size, Persons
+#' @param headeduc Years of education of head of HHYears
+#' @param year 2017=1
 #' 
-#' @references  
 #' @return yield (kg/ha)
 #'
 #' @examples

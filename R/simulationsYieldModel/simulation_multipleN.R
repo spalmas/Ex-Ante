@@ -40,8 +40,6 @@ for(region in c(0,12)){
     mutate(N_price_change = rep(N_price_changes, times=length(N_kg_has)) %>% sort(),
            N_kg_ha = rep(N_kg_has, times=length(N_price_changes)),
            netrev = NA,
-           avcr = NA,
-           mvcr = NA,
            area_low_netrev=NA,
            area_high_netrev=NA,
            ppop2020_low_netrev=NA,
@@ -71,17 +69,10 @@ for(region in c(0,12)){
       #calculating profitability values
       rasters_input_all_changed <- rasters_input_all_changed %>% 
         mutate(totfertcost = N_kg_ha * N_price,
-               netrev = maize_price_farmgate*yield - totfertcost,
-               ap=ap(yield=yield, N_kgha=N_kg_ha),
-               mp=mp(yield_f=yield, yield_nf=ZERO$yield, N_kgha_f=N_kg_ha, N_kgha_nf=0),
-               avcr=avcr(output_price=maize_price_farmgate, ap, input_price=N_price),
-               mvcr=mvcr(output_price=maize_price_farmgate, mp, input_price=N_price)
-               )
+               netrev = maize_price_farmgate*yield - totfertcost)
       
       #filling results summary table
       multipleN$netrev[r] <- mean(rasters_input_all_changed$netrev, na.rm=TRUE)
-      multipleN$mvcr[r] <- mean(rasters_input_all_changed$mvcr, na.rm=TRUE)
-      multipleN$avcr[r] <- mean(rasters_input_all_changed$avcr, na.rm=TRUE)
       
       #Low and high net revenue area percentage. Based on 10 and 90 percentile of the countrywide ZERO$netrev
       multipleN$area_low_netrev[r] <- sum(rasters_input_all_changed$netrev<=low_netrev, na.rm=TRUE)/maize_area

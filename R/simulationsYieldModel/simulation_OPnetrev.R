@@ -11,7 +11,6 @@ library(dplyr)
 library(magrittr)
 library(terra)
 
-
 #### +++++++ SIMULATION +++++++ #### 
 i <- 1
 for (COUNTRY in c('TZA')){
@@ -27,11 +26,11 @@ for (COUNTRY in c('TZA')){
     dplyr::select(index, gadm36_TZA_1, N_price, maize_price_farmgate)
   
   ########## \\ OPnetrev OPTIMIZATION ###############
-  #pixel <- rasters_input_all[23918,]
+  #pixel <- rasters_input_all[8,]
   optim_pixel <- function(pixel, ...){
-    solution <- optimize(f=N_to_netrev, interval=c(0,200), pixel = pixel, maximum=TRUE, tol=0.0000001)
-    if (solution$maximum<0 | solution$objective < 0){solution$maximum <- 0}
-    return(floor(solution$maximum))
+    solution <- optimize(f=N_to_netrev, interval=c(0,300), pixel = pixel, maximum=TRUE, tol=0.0000001)
+    if (solution$maximum<0 ){solution$maximum <- 0}
+    return(round(solution$maximum))
   }
   #optim_pixel(pixel)
   
@@ -49,8 +48,8 @@ for (COUNTRY in c('TZA')){
   
   #### \\ Calculating Yield0 for mvcr  ####
   #Getting amount of fertilizer with one unit less
-  N_kgha0 <- OPyield$N_kgha-1
-  N_kgha0[N_kgha0<0] <- 0  #just in case some OPyield$N_kgha were negative
+  N_kgha0 <- OPnetrev$N_kgha-1
+  N_kgha0[N_kgha0<0] <- 0  #just in case some OPnetrev$N_kgha were negative
   
   yield0 <- mapply(FUN = yield_response,
                    N = N_kgha0,   #nitrogen application kg/ha

@@ -8,22 +8,26 @@
 #' @return net revenue value
 #'
 #' @examples
-#' pixel <- read.csv('data/TZA_soilprice_table.csv')[1,]
-#' N_to_netrev(70, pixel)
+#' source("R/yield_response.R")
+#' rasters_input <- read.csv('data/TZA_soilprice_table.csv')
+#' pixel <- rasters_input[8,]
+#' N_to_netrev(seq(0,200,5), pixel)
+#' N_to_netrev(00, pixel)
 N_to_netrev <- function(N_kgha, pixel, ...) {
   
-  #N_kgha <- 70
-  #totfert cost and total ivnestment
+  #N_kgha <- 00
+  #total fertilization cost
   totfertcost <- pixel[["N_price"]] * N_kgha
   
   #calculate nutrients from fertilizer amount
-  yield <- yield_response(N = N_kgha, 
-                          lograin = pixel[["lograin"]],
-                          loggridorc = pixel[["loggridorc"]],
-                          gridacid =  pixel[["gridacid"]],
-                          acc = pixel[["acc"]],
-                          slope= pixel[["slope"]])
+  yield <- as.numeric(yield_response(N = N_kgha, 
+                                     lograin = pixel[["lograin"]],
+                                     loggridorc = pixel[["loggridorc"]],
+                                     gridacid =  pixel[["gridacid"]],
+                                     acc = pixel[["acc"]],
+                                     slope= pixel[["slope"]]))
   
+  if(is.infinite(yield)){yield <- NA}
   netrev <- pixel[['maize_price_farmgate']] * yield - totfertcost
   return(netrev)  #it should allow for only netrev as return, no??
 }

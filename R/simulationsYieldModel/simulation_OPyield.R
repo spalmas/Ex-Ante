@@ -24,14 +24,14 @@ for (COUNTRY in c('TZA')){
   ########## \\ OPyield table start ###############
   OPyield <- rasters_input_all %>% 
     dplyr::select(index, gadm36_TZA_1, N_price, maize_price_farmgate)
-
+  
   ########## \\ OPyield OPTIMIZATION ###############
   #pixel <- rasters_input_all[23918,]
   #Optimization function
   optim_pixel <- function(pixel, ...){
-    solution <- optimize(f=yield_response, interval=c(0,200),
+    solution <- optimize(f=yield_response, interval=c(0,300),
                          lograin=pixel[["lograin"]],
-                         loggridorc=pixel[["loggridorc"]],
+                         loggridorc=pixel[["loggridorc"]],ci
                          gridacid=pixel[["gridacid"]],
                          acc=pixel[["acc"]],
                          slope=pixel[["slope"]],
@@ -92,7 +92,6 @@ for (COUNTRY in c('TZA')){
   OPyield$mp[OPyield$N_kgha==0] <- NA
   OPyield$avcr[OPyield$N_kgha==0] <- NA
   OPyield$mvcr[OPyield$N_kgha==0] <- NA
-  
   
   #### +++++++ WRITING RESULTS FILES +++++++ ####
   #### \\ Writing table of pixel results

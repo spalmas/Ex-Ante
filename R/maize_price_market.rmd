@@ -29,7 +29,7 @@ library(rgdal)
 ## Data
 There are two sets of data for this exercise: A comma delimited file (CSV) with maize prices from different locations in Tanzania; and several raster files of weather elements, soil properties and distance to infrastructure/amenities that encompasses the whole of Tanzania. We convert the maize price CSV to a shapefile and use it to extract data from the rasters. This extracted data (Training data) is used to create the random forest model (as the predicting variables) together with the maize price from the CSV (as the response variables). The raster files are subsequently used to predict the price of maize in the whole of Tanzania. 
 
-## The Maize Prices data
+## Maize prices data
 This data is made up of maize prices collectted at various locations across Tanzania. We use the maize price data -given in Tanzania shillings per kilogram- in the `spatVector` format. To create this shapefile, we first load the maize prices data into a "data frame" (R object) using the "read.csv" function. The longitude and latitude values of the maize price locations are in decimal degrees and based on the [WGS84](https://confluence.qps.nl/qinsy/en/world-geodetic-system-1984-wgs84-29855173.html) coordinate system. So we assign that CRS to the SpatVector object
 
 ```{r }
@@ -231,7 +231,7 @@ varImpPlot(price.model)
 In this section, we predict the price of maize across the country (Tanzania) using the data prepared in section one and the model created in section two. We make the prediction using the "predict" function in the "raster" package. The function produces a raster file, which has maize prices (TZS/KG) as the pixel/cell values. Finally, we evaluate the prediction by comparing the values the model predicts with the actual prices collected.
 
 ## Price Prediction
-The price.model randomForest object can be used to predict the prices for all pixels in the rasterstack using the `terra::predict` function The spatial prediction -the variables are spatial- function takes two arguments: the prediction variables and the price prediction model. It is a algorithm that takes some time to complete. We also export the raster to a file. 
+The price.model randomForest object can be used to predict the prices for all pixels in the rasterstack using the `terra::predict` function The spatial prediction -the variables are spatial- function takes two arguments: the prediction variables and the price prediction model. It is a algorithm that takes some time to complete. We also export the raster to a file that will be used in next steps.
 
 ```{r}
 spatial.prediction <- terra::predict(rasterstack, # Prediction variable rasters

@@ -111,10 +111,13 @@ maize_price_points <- rast(files)
 #getting the maximum price
 maize_price_points_max <- max(maize_price_points)
 
-#write raster to file
-writeRaster(maize_price_points_max,
-            filename="../data/prices/maize_price_farmgate.tif",
-            overwrite=TRUE)
+#Crop to Tanzania border and save file
+gadm_TZA <- vect("F:/Work/GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp") %>% 
+    terra::project("+proj=laea +lat_0=5 +lon_0=20 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs")
+maize_price_points_max <- mask(x = maize_price_points_max, mask = gadm_TZA,
+                               filename="../data/prices/maize_price_farmgate.tif",
+                               overwrite=TRUE)
+
 ```
 
 
@@ -136,5 +139,18 @@ plot(maize_price_points_max,
      main ="Maximum available farm price, removing negative values",
      zlim	=c(0,minmax(maize_price_points_max)[2]))
 lines(adm)
+```
+
+# With market access
+Another way of calculating farmgate price is to reduce the predicted market price in each pixel by a predicted cost of transporting 1 kg of maize. Because we have an accessibility map in terms of minutes travel to a city, a tranportation cost of X USD/kg/min can be reduce to find a farmgate price.
+
+```{r}
+access <- rast("F:/Work/MarketAccessJordan/mktacc/acc_clipped.tif")
+access <- warp(access, maize_price)
+
+transportation_cost <- 0.0001 #USD/kg/min
+
+farmgate_price <- maize_price-transportation_cost*access
+plot(farmgate_price, main="Farmgate price by accounting for transportation costs per minute")
 ```
 
