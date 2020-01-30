@@ -28,6 +28,6 @@ N_to_netrev <- function(N_kgha, pixel, ...) {
                                      slope= pixel[["slope"]]))
   
   if(is.infinite(yield)){yield <- NA}
-  netrev <- pixel[['maize_price_farmgate']] * yield - totfertcost
+  netrev <- pixel[['maize_farmgate_price']] * yield - totfertcost
   return(netrev)  #it should allow for only netrev as return, no??
 }

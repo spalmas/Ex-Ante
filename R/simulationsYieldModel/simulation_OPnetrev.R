@@ -23,10 +23,11 @@ for (COUNTRY in c('TZA')){
   
   ########## \\ OPnetrev table start ###############
   OPnetrev <- rasters_input_all %>% 
-    dplyr::select(index, gadm36_TZA_1, N_price, maize_price_farmgate)
+    dplyr::select(index, gadm36_TZA_1, N_price, maize_farmgate_price)
   
   ########## \\ OPnetrev OPTIMIZATION ###############
-  #pixel <- rasters_input_all[8,]
+  #pixel <- rasters_input_all[8000,]
+  #N_to_netrev(N_kgha = 250, pixel)
   optim_pixel <- function(pixel, ...){
     solution <- optimize(f=N_to_netrev, interval=c(0,300), pixel = pixel, maximum=TRUE, tol=0.0000001)
     if (solution$maximum<0 ){solution$maximum <- 0}
@@ -69,14 +70,14 @@ for (COUNTRY in c('TZA')){
   #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for OPnetrev ####
   OPnetrev <- OPnetrev %>% 
     mutate(totfertcost = N_kgha * N_price,
-           netrev = maize_price_farmgate*yield - totfertcost,
+           netrev = maize_farmgate_price*yield - totfertcost,
            yield_gain_perc = 100*(yield-ZERO$yield)/ZERO$yield,
            totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
            netrev_gain_perc = 100*(netrev-ZERO$netrev)/ZERO$netrev,
            ap=ap(yield1=yield, N_kgha1=N_kgha),
            mp=mp(yield1=yield, yield0=yield0, N_kgha1=N_kgha, N_kgha0=N_kgha0),
-           avcr=avcr(output_price=maize_price_farmgate, ap, input_price=N_price),
-           mvcr=mvcr(output_price=maize_price_farmgate, mp, input_price=N_price))
+           avcr=avcr(output_price=maize_farmgate_price, ap, input_price=N_price),
+           mvcr=mvcr(output_price=maize_farmgate_price, mp, input_price=N_price))
   
   #### +++++++ REMOVING Inf VALUES +++++++ ####
   #Because some optimization results return a zero N_kg_ha, avcr and mvcr are not properly estimated.
