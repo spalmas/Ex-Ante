@@ -18,7 +18,8 @@ acc <- warp(acc, gridorc)
 slope <- rast("data/soil/srtm_slope_TZA.tif")
 names(slope) <- "slope"
 
-SPAM <- rast("data/soil/spam2010v1r0_global_physical-area_maiz_a_TZA.tif")
+#SPAM <- rast("data/soil/spam2010v1r0_global_physical-area_maiz_a_TZA.tif")
+SPAM <- gridorc/gridorc  #so the simulation is done in all TZA, not only in SPAM distribution
 names(SPAM) <- "SPAM"
 
 pop2020 <- rast("data/WorldPop/AFR_PPP_2020_adj_v2_TZA.tif")   #original SPATIAL RESOLUTION: 0.00833333 decimal degrees (approx 1km at the equator)
@@ -29,12 +30,12 @@ names(pop2020) <- "pop2020"
 #N_price <- warp(urea_price/0.465, gridorc)
 
 # I will use a constant N_price for now. $1 USD/kg of N
-N_price <- warp(1+0*gridorc, gridorc)
+N_price <- gridorc/gridorc
 names(N_price) <- "N_price"
 
-maize_price_farmgate <- rast("data/prices/maize_price_farmgate.tif")   #USD/kg
-maize_price_farmgate <- warp(maize_price_farmgate, gridorc)
-names(maize_price_farmgate) <- "maize_price_farmgate"
+maize_farmgate_price <- rast("data/prices/maize_farmgate_price/TZ_maipkghat_fgprice.tif") / 1598 #to convert from Tsh/kg to USD/kg 2013 prices
+maize_farmgate_price <- warp(maize_farmgate_price, gridorc)
+names(maize_farmgate_price) <- "maize_farmgate_price"
 
 #### \\ Admin  ####
 gadm36_TZA_1  <- rast("data/admin_and_AEZ/gadm36_TZA_1.tiff")
@@ -48,7 +49,7 @@ rasters_input <- cbind(values(gadm36_TZA_1),
                        values(slope),
                        values(SPAM),
                        values(N_price),
-                       values(maize_price_farmgate)) %>% 
+                       values(maize_farmgate_price)) %>% 
   as_tibble()
 
 #### ADD ALL RAINFALL VALUES FROM 1981-2019 ####
@@ -64,7 +65,7 @@ for (rainfall_tif_file in rainfall_tif_files){
   #Extracting values for that years tif
   rainfall_tif <- rast(rainfall_tif_file)
   names(rainfall_tif) <- year_label
-  rainfall_values <- values(rainfall_tif) %>% as.tibble()
+  rainfall_values <- values(rainfall_tif) %>% as_tibble()
   
   #binding to table
   rasters_input <- cbind(rasters_input,rainfall_values)
@@ -82,14 +83,15 @@ seasons <- c("rainfall1981_1982", "rainfall1982_1983", "rainfall1983_1984", "rai
              "rainfall2017_2018", "rainfall2018_2019")
 rasters_input$lograin <- rowMeans(log(rasters_input[,seasons]), na.rm = TRUE)  #to use all rainfalls. Faster than calculating all yields and then taking average
 
-#### FILTERING OUT VALUES, CALCULATING NEW ONES ####
+#### KEEPING ONLY COMPLETE CASES, AND CALCULATING NEW VARIABLES
 rasters_input <- rasters_input %>% 
   mutate(index = 1:nrow(rasters_input)) %>% 
   filter(complete.cases(.)) %>% 
   mutate(loggridorc = log(gridorc)) %>% 
   dplyr::select(-gridorc)
 
+#### PRINTING TO CHECK ####
 head(rasters_input)
 
 #### EXPORTING TABLE TO A FILE  ####
-data.table::fwrite(rasters_input, file = paste0('Data/TZA_soilprice_table.csv'))
+data.table::fwrite(rasters_input, file = "data/TZA_soilprice_table.csv")

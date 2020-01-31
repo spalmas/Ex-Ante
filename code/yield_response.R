@@ -110,8 +110,8 @@ yield_response <- function(N,
     year*p_year +
     constant
   
-  #do not allow negative values. -Inf because this is a maximization problem
-  if (yield<0) yield <- -Inf
+  #do not allow negative values.
+  if (yield<0) yield <- 0
   
   return(yield)
 }

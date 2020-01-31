@@ -1,0 +1,147 @@
+---
+title: "Estimate farmgate prices for Tanzania"
+author: "Sebastian Palmas"
+#date:  "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+
+The price of maize in the farms is lower in areas farther away from markets because the cost of transportation of the production. In this case, we assume that for each km, the cost of moving maize is 0.01 USD/kg. Therefore, the price on farms will be the maize price at the nearest market minus the transportation cost from the farm to the market.
+
+I will do the analysis at 1km resoltion.
+
+The market location and their output value will serve as end points for a cumulative cost analysis.
+
+## Packages and scripts
+```{r}
+rm(list=ls())
+gc()
+library(gdistance)
+library(raster)
+library(terra)
+library(magrittr)
+```
+##Projection
+WE will use this projection across the project
+```{r}
+prj <- "+proj=laea +lat_0=-6 +lon_0=34 +ellps=WGS84 +units=m +no_defs"
+```
+
+
+#Travel time to each market
+## Friction layer to cost
+We obtained the friction layer from https://developers.google.com/earth-engine/datasets/catalog/Oxford_MAP_friction_surface_2015_v1_0. This enumerates land-based travel speed for all land pixels. It forms the underlying dataset behind the global accessibility map.
+
+```{r}
+friction <- raster("../data/mktacc/tanzania-friction.tif") %>% projectRaster(crs=prj, method="ngb")
+plot(friction, main="Travel speed (min/m)")
+```
+
+We will define the cost of crossing a pixel to be in time min. Therefore we need to correct the min/m scale to be just min, by multiplying for the resolution of the layer in m.
+
+```{r}
+#converting friction to cost: in this case cost is the minutes required to cross the pixel.
+cost <- friction*mean(res(friction))  #almost a 1km resolution
+plot(cost, main="Travel cost (min/pixel)")
+```
+
+##Travel time to markets
+In here, we compute travel time from each market to each pixel in the area.
+
+* Creating a transition object. Because the transition matrix requires conductance values, we take the inverse of the friction layer. The value of the edge is the mean of the speeds between the pixels.
+* Because diagonal paths are longer and there is a slight distortion of east/west when moving away from the equator, the transition matrix needs geocorrection (see gdistance pdf)
+
+```{r}
+trans <- transition(friction, transitionFunction = function(x){1/mean(x)}, directions=4)
+trans <- geoCorrection(trans, type = 'c')
+
+plot(raster(trans), main='Transition matrix (pixel/min?)')
+```
+
+
+Towns were obtained from the GRUMP database: Center for International Earth Science Information Network - CIESIN - Columbia University, CUNY Institute for Demographic Research - CIDR, International Food Policy Research Institute - IFPRI, The World Bank, and Centro Internacional de Agricultura Tropical - CIAT. 2017. Global Rural-Urban Mapping Project, Version 1 (GRUMPv1): Settlement Points, Revision 01. Palisades, NY: NASA Socioeconomic Data and Applications Center (SEDAC). https://doi.org/10.7927/H4BC3WG1. Accessed 23 10 2019.
+
+```{r}
+grump <- rgdal::readOGR("F:/Work/grump-v1-settlement-points-rev01-shp/global_settlement_points_v1.01_TZA_CitiesAdded.shp") %>% 
+  spTransform(prj)
+```
+
+
+## Getting output prices at towns centers
+We first need the predicted maize prices at market locations. We also need to bring the maize_price raster to 1km resolution by aggregating using a mean of the cells (the original resolution is 250m, we need to aggregate by a factor of 4 to reach 1km).
+
+```{r, eval=FALSE}
+maize_price <- rast("F:/Work/MaizePricePredictions/TZA/pred_maize_price1.tif") / 2292 #/2292 to convert from TSH/kg to USD/kg
+#Converting to 1km resolution
+maize_price <- aggregate(maize_price, fact=4, filename="../data/prices/pred_maize_price1_1km.tif", overwrite=TRUE)
+```
+
+```{r}
+maize_price <- raster("../data/prices/pred_maize_price1_1km.tif") %>% projectRaster(crs=prj)
+plot(maize_price, main="Market maize prices in Tanzania")
+```
+
+
+```{r}
+maize_price_grump <- extract(maize_price, grump) 
+
+#the extract function is returning some NA values, I will complete the list with a mean of the other values
+maize_price_grump[is.na(maize_price_grump)] <- mean(maize_price_grump, na.rm=TRUE)
+
+#We'll export the predicted price for the markets for validation
+market_price <- cbind(grump$Name1, round(maize_price_grump, digits = 4))
+write.csv(market_price, file = "../data/prices/maize_market_price.csv")
+```
+
+## Calculting farmgate pricex
+We then calculate the cost of access of each pixel to the each market. This cost of access will have units of 
+1) Calculating time to market
+2) Use the formula of: marketprice(USD/kg) - 0.01(USD/kg/hr) * time to market (hr) to calculate the prices (usd/kg) in each pixel.
+```{r}
+for(point_n in seq_along(grump)){
+  #point_n <- 2 # to test
+  if(!is.na(raster::extract(raster(trans), grump[point_n,]))){  #there are some points that do not lie within the extent of the data. No idea why
+    #time to market in hours
+    time_to_market <- accCost(trans, fromCoords=grump[point_n,])/60  
+    
+    #transportation cost
+    tr_cost <- 0.01 #USD/hr
+    
+    farmgate_price <- maize_price_grump[point_n] - time_to_market*tr_cost
+    #plot(farmgate_price)
+    
+    writeRaster(farmgate_price,
+                filename=paste0("../data/prices/maize_farmgate_price/maize_farmgate_price",point_n,".tif"),
+                overwrite=TRUE)
+  }
+  #acc[is.infinite(acc)] <- NA
+  #to convert from m to km
+}
+
+plot(time_to_market, main="Time to market #77 (hr)")
+plot(farmgate_price, main="Farmgate price to market #77 (USD/kg)")
+```
+
+
+## What is the maximum cost between all market prices
+Farmers will sell their produce to the highest bidder. Picking the maximum price across the possibilities. They won't send their produce very far away and lose money.
+```{r}
+#list all raster files
+files <- list.files(path = "../data/prices/maize_farmgate_price/",
+                    pattern = ".tif",full.names=TRUE)
+
+#combine all rasters
+farmgate_prices <- rast(files)
+
+#getting the maximum price
+farmgate_price <- max(farmgate_prices, na.rm=TRUE)
+writeRaster(farmgate_price, filename="../data/prices/maize_farmgate_price/maize_farmgate_price.tif", overwrite=TRUE)
+
+plot(farmgate_price, main ="Maximum available farm price (USD/ha)")
+
+
+```
+
+
+
+

@@ -30,7 +30,7 @@ library(rgdal)
 There are two sets of data for this exercise: A comma delimited file (CSV) with maize prices from different locations in Tanzania; and several raster files of weather elements, soil properties and distance to infrastructure/amenities that encompasses the whole of Tanzania. We convert the maize price CSV to a shapefile and use it to extract data from the rasters. This extracted data (Training data) is used to create the random forest model (as the predicting variables) together with the maize price from the CSV (as the response variables). The raster files are subsequently used to predict the price of maize in the whole of Tanzania. 
 
 ## Maize prices data
-This data is made up of maize prices collectted at various locations across Tanzania. We use the maize price data -given in Tanzania shillings per kilogram- in the `spatVector` format. To create this shapefile, we first load the maize prices data into a "data frame" (R object) using the "read.csv" function. The longitude and latitude values of the maize price locations are in decimal degrees and based on the [WGS84](https://confluence.qps.nl/qinsy/en/world-geodetic-system-1984-wgs84-29855173.html) coordinate system. So we assign that CRS to the SpatVector object
+This data is made up of maize prices collectted at various locations across Tanzania in the 2015 LSMS data. We use the maize price data -given in Tanzania shillings per kilogram- in the `spatVector` format. To create this shapefile, we first load the maize prices data into a "data frame" (R object) using the "read.csv" function. The longitude and latitude values of the maize price locations are in decimal degrees and based on the [WGS84](https://confluence.qps.nl/qinsy/en/world-geodetic-system-1984-wgs84-29855173.html) coordinate system. So we assign that CRS to the SpatVector object
 
 ```{r }
 maize.price_table <- read.csv("F:/Work/LSMS/TZA/maize_prices_2015/local_maize_prices_2015.csv")
@@ -274,3 +274,50 @@ plot_fitness(obs =maize.price$maipkg[predict.vrbs.complete],
 ```
 
 To conclude, the predicted maize prices and the observed maize prices are positively are correlated even though the observed prices are mostly figures that are multiples of 50 such as 250, 800 and 1000(TZS/KG). 
+
+## Evaluation with LSMS 2013, village, ward and local data
+```{r}
+pred_maize_price1 <- rast("F:/Work/MaizePricePredictions/TZA/pred_maize_price1.tif")
+
+district_2013 <- read.csv("F:/Work/LSMS/TZA/maize_prices_2013/district_maize_prices_2013.csv")
+ward_2013 <- read.csv("F:/Work/LSMS/TZA/maize_prices_2013/ward_maize_prices_2013.csv")
+local_2013 <- read.csv("F:/Work/LSMS/TZA/maize_prices_2013/local_maize_prices_2013.csv")
+
+#removing outliers
+ward_2013$maipkg[ward_2013$maipkg > 2000] <- NA
+local_2013$maipkg[local_2013$maipkg > 2000] <- NA
+
+#create spatial objects from tables
+district_2013_vect <- vect(district_2013[,c("lon_modified", "lat_modified")],
+                           crs = "+proj=longlat +datum=WGS84 +no_defs ")
+district_2013_vect <- terra::project(district_2013_vect, crs=crs(pred_maize_price1))
+
+ward_2013_vect <- vect(ward_2013[,c("lon_modified", "lat_modified")],
+                           crs = "+proj=longlat +datum=WGS84 +no_defs ")
+ward_2013_vect <- terra::project(ward_2013_vect, crs=crs(pred_maize_price1))
+
+local_2013_vect <- vect(local_2013[,c("lon_modified", "lat_modified")],
+                           crs = "+proj=longlat +datum=WGS84 +no_defs ")
+local_2013_vect <- terra::project(local_2013_vect, crs=crs(pred_maize_price1))
+
+#extract values and add them to the tables
+district_2013$pred_maize_price1 <- as.vector(extract(pred_maize_price1, district_2013_vect, drop=TRUE))
+ward_2013$pred_maize_price1 <- as.vector(extract(pred_maize_price1, ward_2013_vect, drop=TRUE))
+local_2013$pred_maize_price1 <- as.vector(extract(pred_maize_price1, local_2013_vect, drop=TRUE))
+
+#correlation plots
+plot_fitness(obs =district_2013$maipkg,
+             pred=district_2013$pred_maize_price1,
+             "District Fitness")
+
+plot_fitness(obs =ward_2013$maipkg,
+             pred=ward_2013$pred_maize_price1,
+             "Ward Fitness")
+
+plot_fitness(obs =local_2013$maipkg,
+             pred=local_2013$pred_maize_price1,
+             "Local Fitness")
+
+
+```
+
