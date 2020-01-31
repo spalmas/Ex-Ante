@@ -3,26 +3,103 @@
 cd /mnt/f/Work
 
 ######################################
-#### ORGANIC CARBON AND PH LAYERS ####
-gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_ORCDRC_T__M_sd1_250m.tif Ex-Ante/data/soil/TZA_ORCDRC_T__M_sd1_1000m.tif
-gdalinfo Ex-Ante/data/soil/TZA_ORCDRC_T__M_sd1_1000m.tif
+#### ISRIC FILES (INCLUDING ORGANIC CARBON AND PH) ####
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_ALUM3S_T__M_xd1_250m.tif Ex-Ante/data/files.isric.org/af_ALUM3S_T__M_xd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_ALUM3S_T__M_xd2_250m.tif Ex-Ante/data/files.isric.org/af_ALUM3S_T__M_xd2_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_BLD_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_BLD_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_CEC_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_CEC_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_CLYPPT_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_CLYPPT_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_CLYPPT_T__M_sd2_250m.tif Ex-Ante/data/files.isric.org/af_CLYPPT_T__M_sd2_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_CLYPPT_T__M_sd3_250m.tif Ex-Ante/data/files.isric.org/af_CLYPPT_T__M_sd3_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_CRFVOL_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_CRFVOL_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_DRAINFAO_T__M_250m.tif Ex-Ante/data/files.isric.org/af_DRAINFAO_T__M_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_EXKX_T__M_xd1_250m.tif Ex-Ante/data/files.isric.org/af_EXKX_T__M_xd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_NTO_T__M_xd1_250m.tif Ex-Ante/data/files.isric.org/af_NTO_T__M_xd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_ORCDRC_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_ORCDRC_T__M_sd2_250m.tif Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd2_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_ORCDRC_T__M_sd3_250m.tif Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd3_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_PHIHOX_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_PHIHOX_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_PHIHOX_T__M_sd4_250m.tif Ex-Ante/data/files.isric.org/TZA_PHIHOX_T__M_sd4_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_SLTPPT_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_SLTPPT_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_SLTPPT_T__M_sd2_250m.tif Ex-Ante/data/files.isric.org/af_SLTPPT_T__M_sd2_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_SLTPPT_T__M_sd3_250m.tif Ex-Ante/data/files.isric.org/af_SLTPPT_T__M_sd3_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_SNDPPT_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_SNDPPT_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_SNDPPT_T__M_sd2_250m.tif Ex-Ante/data/files.isric.org/af_SNDPPT_T__M_sd2_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_SNDPPT_T__M_sd3_250m.tif Ex-Ante/data/files.isric.org/af_SNDPPT_T__M_sd3_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_TEXMHT_T__M_sd1_250m.tif Ex-Ante/data/files.isric.org/af_TEXMHT_T__M_sd1_1000m.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_TEXMHT_T__M_sd2_250m.tif Ex-Ante/data/files.isric.org/af_TEXMHT_T__M_sd2_1000m.tif
 
-#get info of the organic carbon to match all other layers
-gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite files.isric.org/public/afsis250m/af_PHIHOX_T__M_sd1_250m.tif Ex-Ante/data/soil/TZA_PHIHOX_T__M_sd1_1000m.tif
+######################################
+#### MARKUS STACK ####
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/BIO1.tif Ex-Ante/data/MarkusStacks/BIO1.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/BIO7.tif Ex-Ante/data/MarkusStacks/BIO7.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/BIO12.tif Ex-Ante/data/MarkusStacks/BIO12.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/BIO15.tif Ex-Ante/data/MarkusStacks/BIO15.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/BPP15.tif Ex-Ante/data/MarkusStacks/BPP15.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/BPP17.tif Ex-Ante/data/MarkusStacks/BPP17.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/CEC.tif Ex-Ante/data/MarkusStacks/CEC.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/CPP15.tif Ex-Ante/data/MarkusStacks/CPP15.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/CPP17.tif Ex-Ante/data/MarkusStacks/CPP17.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DCELL.tif Ex-Ante/data/MarkusStacks/DCELL.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DFRES.tif Ex-Ante/data/MarkusStacks/DFRES.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DGRES.tif Ex-Ante/data/MarkusStacks/DGRES.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DGRID.tif Ex-Ante/data/MarkusStacks/DGRID.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DHRSL.tif Ex-Ante/data/MarkusStacks/DHRSL.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DNLT.tif Ex-Ante/data/MarkusStacks/DNLT.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DOR1.tif Ex-Ante/data/MarkusStacks/DOR1.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DOR2.tif Ex-Ante/data/MarkusStacks/DOR2.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DOWS.tif Ex-Ante/data/MarkusStacks/DOWS.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DPARK.tif Ex-Ante/data/MarkusStacks/DPARK.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DPOP1.tif Ex-Ante/data/MarkusStacks/DPOP1.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/DPOP2.tif Ex-Ante/data/MarkusStacks/DPOP2.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/EVI.tif Ex-Ante/data/MarkusStacks/EVI.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/FIRE.tif Ex-Ante/data/MarkusStacks/FIRE.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/GBD.tif Ex-Ante/data/MarkusStacks/GBD.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/GCCP.tif Ex-Ante/data/MarkusStacks/GCCP.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/GFPL.tif Ex-Ante/data/MarkusStacks/GFPL.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/lat.tif Ex-Ante/data/MarkusStacks/lat.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/LCB.tif Ex-Ante/data/MarkusStacks/LCB.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/LCC.tif Ex-Ante/data/MarkusStacks/LCC.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/LCS.tif Ex-Ante/data/MarkusStacks/LCS.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/LCT.tif Ex-Ante/data/MarkusStacks/LCT.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/LCU.tif Ex-Ante/data/MarkusStacks/LCU.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/long.tif Ex-Ante/data/MarkusStacks/long.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/LSTD.tif Ex-Ante/data/MarkusStacks/LSTD.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/LSTN.tif Ex-Ante/data/MarkusStacks/LSTN.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/MB1.tif Ex-Ante/data/MarkusStacks/MB1.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/MB2.tif Ex-Ante/data/MarkusStacks/MB2.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/MB3.tif Ex-Ante/data/MarkusStacks/MB3.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/MB7.tif Ex-Ante/data/MarkusStacks/MB7.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/MDEM.tif Ex-Ante/data/MarkusStacks/MDEM.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/NPPA.tif Ex-Ante/data/MarkusStacks/NPPA.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/NPPS.tif Ex-Ante/data/MarkusStacks/NPPS.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/PARA.tif Ex-Ante/data/MarkusStacks/PARA.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/PARV.tif Ex-Ante/data/MarkusStacks/PARV.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/PH.tif Ex-Ante/data/MarkusStacks/PH.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/S1VV.tif Ex-Ante/data/MarkusStacks/S1VV.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/S2B11.tif Ex-Ante/data/MarkusStacks/S2B11.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/S2B12.tif Ex-Ante/data/MarkusStacks/S1B12.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/SLOPE.tif Ex-Ante/data/MarkusStacks/SLOPE.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/SND.tif Ex-Ante/data/MarkusStacks/SND.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/SOC.tif Ex-Ante/data/MarkusStacks/SOC.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/TIM.tif Ex-Ante/data/MarkusStacks/TIM.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/WPOP.tif Ex-Ante/data/MarkusStacks/WPOP.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarkusStacks/TZ_250m_2019/WPP17.tif Ex-Ante/data/MarkusStacks/WPP17.tif
+
 
 ######################################
 #### SPAM ####
 #crop the merged raster to boundaries of Tanzania and change resolution to match 
-gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite SPAM/spam2010v1r0/spam2010v1r0_global_phys_area.geotiff/spam2010v1r0_global_physical-area_maiz_a.tif Ex-Ante/data/soil/spam2010v1r0_global_physical-area_maiz_a_TZA.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite SPAM/spam2010v1r1/spam2010v1r1_global_phys_area.geotiff/spam2010V1r1_global_A_MAIZ_A.tif Ex-Ante/data/SPAM/spam2010V1r1_global_A_MAIZ_A_TZA.tif
 
 ######################################
 #### ELEVATION AND SLOPE ####
 gdal_merge.py -o CGIAR-SRTM/srtm_TZA_merged.tif -of GTiff CGIAR-SRTM/srtm_42_13/srtm_42_13.tif CGIAR-SRTM/srtm_42_14/srtm_42_14.tif CGIAR-SRTM/srtm_43_13/srtm_43_13.tif CGIAR-SRTM/srtm_43_14/srtm_43_14.tif CGIAR-SRTM/srtm_43_15/srtm_43_15.tif CGIAR-SRTM/srtm_44_13/srtm_44_13.tif CGIAR-SRTM/srtm_44_14/srtm_44_14.tif CGIAR-SRTM/srtm_44_15/srtm_44_15.tif
 
 #crop the merged raster to boundaries of Tanzania and change resolution to match 
-gdalwarp  -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite CGIAR-SRTM/srtm_TZA_merged.tif Ex-Ante/data/soil/srtm_TZA.tif
+gdalwarp  -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite CGIAR-SRTM/srtm_TZA_merged.tif Ex-Ante/data/CGIAR-SRTM/srtm_TZA.tif
 #Create slope
-gdaldem slope Ex-Ante/data/soil/srtm_TZA.tif Ex-Ante/data/soil/srtm_slope_TZA.tif -of GTiff -co compress=lzw
+gdaldem slope Ex-Ante/data/CGIAR-SRTM/srtm_TZA.tif Ex-Ante/data/CGIAR-SRTM/srtm_slope_TZA.tif -of GTiff -co compress=lzw
 
 
 ######################################
@@ -146,7 +223,10 @@ gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36
 ######################################
 #### MARKET ACCESS ####
 #crop the merged raster to boundaries of Tanzania
-gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarketAccessJordan/mktacc/acc.tif Ex-Ante/data/mktacc/acc.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarketAccessJordan/mktacc/acc50k.tif Ex-Ante/data/mktacc/acc50k.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarketAccessJordan/mktacc/acc100k.tif Ex-Ante/data/mktacc/acc100k.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarketAccessJordan/mktacc/accdar.tif Ex-Ante/data/mktacc/accdar.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite MarketAccessJordan/mktacc/accprd.tif Ex-Ante/data/mktacc/accprd.tif
 
 ######################################
 #### RASTERIZE AEZ AND FERTILIZER RECOMMENDATIONS ####
@@ -158,13 +238,12 @@ gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36
 ######################################
 #### POPULATION ####
 #original data with SPATIAL RESOLUTION: 0.00833333 decimal degrees (approx 1km at the equator)
-gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite WorldPop/Africa/AFR_PPP_2020_adj_v2.tif WorldPop/Africa/AFR_PPP_2020_adj_v2_TZA.tif
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite WorldPop/Africa/AFR_PPP_2020_adj_v2.tif Ex-Ante/data/WorldPop/AFR_PPP_2020_adj_v2_TZA.tif
   
 ######################################
 #### RASTERIZE ADMIN1  ####
-gdal_rasterize  -a ID -ts 4615 4466 GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_1.shp GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_1.tiff
-gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_1.tiff Ex-Ante/data/admin_and_AEZ/gadm36_TZA_1.tiff
-gdalinfo Ex-Ante/data/admin_and_AEZ/gadm36_TZA_1.tiff
+gdal_rasterize -a ID -ts 4615 4466 GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_1.shp GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_1.tiff
+gdalwarp -t_srs EPSG:102022 -tr 1000 1000 -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_1.tiff Ex-Ante/data/admin/gadm36_TZA_1.tiff
 
 #copy all files to local folder
 cp -r Ex-Ante/data /mnt/c/Users/S.PALMAS/source/repos/spalmas/Ex-Ante
