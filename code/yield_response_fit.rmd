@@ -1,0 +1,129 @@
+---
+title: "Random Forest Prediction of yield response"
+#author: "Sebastian Palmas"
+#date: "2020/01/31"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+```
+
+## Packages
+```{r, message=FALSE}
+library(tidyverse)
+```
+
+## Data
+This is the TZAPS yield measurements from 2016 and 2017 added with many layers of information from ISRIC, markus stacks, access from Jordan, CHIRPS season data (from 2016 and 2017), CGIAR-SRTM data.
+This file was prepared in the *TZAPS_hhid_coords_extract.R* code.
+```{r, message=FALSE}
+TZAPS <- read_csv("F:/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>% 
+  filter(!is.na(yld)) %>% 
+  select(-hhid)
+
+#We filter all the observations without yield. 
+head(TZAPS)
+```
+
+# Random Forest Yield prediction
+We need to check if there are any predictors with NA values
+```{r}
+for(column in seq_along(TZAPS)){
+  if(any(is.na(TZAPS[column]))){
+    print(paste0("Column: ", colnames(TZAPS)[column], " has at least one NA value"))
+  }
+}
+```
+For those columns, let's do something about it
+```{r}
+#We can't do anything if there is no fertilizer data. It is one row I think. Let's delete it. (Should we use zeroes for those numbers?)
+TZAPS <- TZAPS %>% filter(!is.na(N_kgha))
+#column N_kgha,P_kgha,K_kgha and logha  are now without problems
+
+#for column headage and headagesq let's fill 22 with the mean age from the rest of the table and therefore fill headagesq with their squares
+TZAPS$headage[is.na(TZAPS$headage)] <- mean(TZAPS$headage, na.rm=TRUE)
+TZAPS$headagesq <- TZAPS$headage^2
+
+# Similarly, let's fill femhead and headeduc with the mean from the rest
+TZAPS$femhead[is.na(TZAPS$femhead)] <- mean(TZAPS$femhead, na.rm=TRUE)
+TZAPS$headeduc[is.na(TZAPS$headeduc)] <- mean(TZAPS$headeduc, na.rm=TRUE)
+
+```
+
+
+Let's load the RF library
+```{r}
+library(randomForest)
+```
+## Tune The Forest
+By "tune the forest", we mean the process of determining the optimal number of variables to consider at each split in a decision-tree. Too many prediction variables and the algorithm will over-fit; too few prediction variables and the algorithm will under-fit. so first, we use `tuneRF` function to get the possible optimal numbers of prediction variables. The `tuneRF` function takes two arguments: the prediction variables and the response variable.
+```{r}
+trf <- tuneRF(x=TZAPS[,2:ncol(TZAPS)], # Prediction variables
+              y=TZAPS$yld) # Response variable
+```
+
+`tuneRF` returns the several numbers of variables randomly sampled as candidates at each split (mtry). To build the model, we pick the number with the lowest [Out-of-Bag (OOB) error.](https://en.wikipedia.org/wiki/Out-of-bag_error) prediction error.
+```{r}
+(mintree <- trf[which.min(trf[,2]),1])
+```
+
+
+## Fit The Model
+We create a model with the `randomForest` function which takes as arguments: the response variable the prediction variables and the optimal number of variables to consider at each split (estimated above). We also get the function to rank the prediction variables based on how much influence they have in the decision-trees' results.
+```{r}
+yield.rf <- randomForest(yld~., TZAPS,
+                            mtry=mintree, # Number of variables in subset at each split
+                            importance = TRUE) # Assess importance of predictors.
+yield.rf
+```
+
+We can have a look at the model in detail by plotting it to see a plot of the number of trees against OOB error: the error rate as the number of trees increase. 
+```{r}
+plot(yield.rf)
+```
+
+RMSE of the optimal random forest
+```{r}
+(oob <- sqrt(yield.rf$mse[which.min(yield.rf$mse)]))
+```
+We can have a look at each variable's influence by plotting their importance based on different indices given by the [importance function](https://www.rdocumentation.org/packages/randomForest/versions/4.6-14/topics/importance).
+```{r}
+varImpPlot(yield.rf)
+```
+
+# Prediction Evaluation
+To assess the predictions, we will compare the observed maize yields (the training data) with the predicted maize yields (predicted using the training data). Considering that the training data, is in point form as opposed to raster, we will make a non-spatial prediction using the predict function in the "stats" package. We plot the observed and predicted values to see the trend. 
+```{r}
+pred <- stats::predict(yield.rf)
+
+rsq <- function (obs, pred) cor(obs, pred, use = 'complete.obs') ^ 2
+RMSE <- function(obs, pred){sqrt(mean((pred - obs)^2, na.rm = TRUE))}
+plot_fitness <- function(obs, pred, name){
+  r2 <- rsq(obs, pred) %>% round(digits = 3)
+  rmse <- RMSE(obs, pred) %>% round(digits = 3)
+  
+  plot(x = obs, pred,
+       main = paste0(name, ". r2 = ", r2, ". RMSE = ", rmse))
+  abline(a=0, b=1)
+}
+
+plot_fitness(obs = TZAPS$yld,
+             pred = pred,
+             "Fitness")
+```
+## Partial dependence plots
+Partial dependence plots of selected variables
+```{r}
+
+#imp <- importance(yield.rf)
+#impvar <- rownames(imp)[order(imp[, 1], decreasing=TRUE)][1:10]
+
+impvar <- c("N_kgha", "P_kgha", "K_kgha", "total_rainfall","elevation","slope","af_ORCDRC_T__M_sd1_1000m", "af_PHIHOX_T__M_sd1_1000m", "acc100k", "acc50k")
+op <- par(mfrow=c(2, 5))
+for (i in seq_along(impvar)) {
+    partialPlot(yield.rf, as.data.frame(TZAPS), impvar[i], xlab=impvar[i],
+                main="Partial Dependence")
+}
+par(op)
+```
