@@ -1,17 +1,17 @@
 #Scripts to simulate mean yields and netrevenues using all CHIRPS seasons and get variability
 
-#### +++++++ SCRIPTS +++++++ ####
-source('R/yield_response.R')
-source('R/fertilizer_prof_measures.R')
-
 #### +++++++ PACKAGES +++++++ ####
 library(tidyverse)
 
+#### +++++++ SCRIPTS +++++++ ####
+source("code/fertilizer_prof_measures.R")
+source("code/yield_response.R")
+
 #### +++++++ MATRIX OF SOIL DATA +++++++ ####
-rasters_input <- read.csv(file="data/TZA_soilprice_table.csv")
+rasters_input <- read.table(paste0("data/TZA_soilprice_table.txt"), header=TRUE, sep=" ")
 
 #getting the names of rainfall seasons to use for results table 
-seasons <- rasters_input %>% dplyr::select(starts_with("rainfall")) %>% colnames()
+seasons <- rasters_input %>% dplyr::select(starts_with("rfe")) %>% colnames()
 
 #### \\ Tables for scenario pixel results
 VAR <- rasters_input %>% dplyr::select(index, gadm36_TZA_1, N_price, maize_farmgate_price)
@@ -22,15 +22,13 @@ VAR$N_kgha <- read_csv("results/tables/TZA_OPnetrev.csv")$N_kgha
 ########## +++++++ VARIABILITY +++++++ ###############
 for(season in seasons){
   #season <- seasons[3] #to test
-  lograin <- log(rasters_input[season])[,1]   #log rain for that season
+  seas_rainfall <- rasters_input[season][,1]   #seasonal rainfall
   
   yield <- mapply(FUN = yield_response,
                   N = VAR$N_kgha,   #nitrogen application kg/ha
-                  lograin = lograin,
-                  loggridorc = rasters_input$loggridorc,
-                  gridacid = rasters_input$gridacid,
-                  acc = rasters_input$acc,
-                  slope = rasters_input$slope)
+                  elevation = rasters_input[["elevation"]],
+                  slope = rasters_input[["slope"]],
+                  seas_rainfall = seas_rainfall)
   
   #### \\ Remove -Inf values  ####
   yield[is.infinite(yield)] <- NA
@@ -55,8 +53,8 @@ VAR$netrev_cv <- 100*VAR$netrev_sd/VAR$netrev_mean
 
 #### \\ Writing rasters ####
 library(terra)
-source("R/buildraster.R")
-template <- rast(paste0('data/soil/TZA_ORCDRC_T__M_sd1_1000m.tif'))
+source("code/buildraster.R")
+template <- rast("data/CGIAR-SRTM/srtm_slope_TZA.tif")
 writeRaster(buildraster(VAR$netrev_mean, VAR, template), filename="results/tif/TZA_OPnetrev_netrev_mean.tif", overwrite=TRUE)
 writeRaster(buildraster(VAR$netrev_sd, VAR, template), filename="results/tif/TZA_OPnetrev_netrev_sd.tif", overwrite=TRUE)
 writeRaster(buildraster(VAR$netrev_cv, VAR, template), filename="results/tif/TZA_OPnetrev_netrev_cv.tif", overwrite=TRUE)
