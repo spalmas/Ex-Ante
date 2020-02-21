@@ -9,6 +9,7 @@ library(dplyr)
 library(magrittr)
 library(nloptr)  #for optimization algorithm
 library(parallel)
+library(randomForest)
 library(terra)
 
 #### +++++++ SCRIPTS +++++++ ####
@@ -70,7 +71,7 @@ optim_pixel <- function(pixel){
 #optim_pixel(pixel) #to test
 
 #### Start cluster  ####
-cl <- makeCluster(detectCores()) #How many cores to use in the parallel processing
+cl <- makeCluster(detectCores(), type = "FORK") #How many cores to use in the parallel processing
 
 # Apply optimization for each row for all seasons of rainfall
 for(season in seasons){
@@ -79,8 +80,8 @@ for(season in seasons){
   #optim_pixel(OPyield[9864,])  #to test
   
   #appplyting optimize function
-  solutions <- parApply(cl = cl, X = OPnetrev, MARGIN = 1, FUN = optim_pixel)  #parallel version
-  solutions <- apply(X = OPyield[1:20,], MARGIN = 1, FUN = optim_pixel)  #not parallel version
+  solutions <- parApply(cl = cl, X = OPyield, MARGIN = 1, FUN = optim_pixel)  #parallel version
+  #solutions <- apply(X = OPyield[1:20,], MARGIN = 1, FUN = optim_pixel)  #not parallel version
    
   #storing results
   OPyield[, paste0("N_kgha_", season)] <- floor(solutions[1,])  #floor to just store integers
