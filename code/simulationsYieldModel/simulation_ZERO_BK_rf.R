@@ -1,8 +1,8 @@
 #SCRIPT TO SIMULATE THE ZERO AND BK SCENARIO USING RANDOM FOREST MODEL
 
 #### +++++++ CLEAN MEMORY +++++++ ####
-gc()
 rm(list=ls())
+gc()
 
 #### +++++++ PACKAGES +++++++ ####
 library(terra)
@@ -14,16 +14,11 @@ source("code/fertilizer_prof_measures.R")
 source("code/yield_response.R")
 yield.rf <- readRDS("results/models/yield.rf2.rds")
 
-#### \\ Fertilizer amount table for BAU and BK ####
-BAU_BK_inputs <- read.csv("data/BAU_BK_inputs.csv")
-
-
 #### +++++++ TABLE OF PIXEL VALUES +++++++ ####
-#Getting the table of pixel valuess
 rasters_input <- read.table(paste0("data/TZA_soilprice_table.txt"), header=TRUE, sep=" ")
 
 ########## +++++++ SIMULATION +++++++ ###############
-#### \\ Constants of household variables to use in the prediction ####
+########## \\ Constants of household variables to use in the simulation ###############
 rasters_input <- rasters_input %>% mutate(
   year           = 2.016310e+03,
   intercrop      = 5.643225e-01,
@@ -31,20 +26,20 @@ rasters_input <- rasters_input %>% mutate(
   manure         = 1.972556e-01,
   cropres        = 9.262436e-02,
   weedings       = 1.826758e+00,
-  pesticide_bin  = 1.715266e-03,
   impseed        = 1.355060e-01,
   disease        = 1.320755e-01,
   striga         = 3.430532e-02,
   fallow3yr      = 4.116638e-02,
   struct         = 2.521441e-01,
   terraced       = 3.430532e-02,
-  logha         = -5.170819e-01,
+  logha          = -5.170819e-01,
   headage        = 4.777208e+01,
   femhead        = 1.360424e-01,
   hhsize         = 5.655232e+00,
-  headeduc       = 7.051237e+00)
+  headeduc       = 7.051237e+00,
+)
 
-#getting the names of rainfall seasons to use for results table 
+########## \\ Getting the names of rainfall seasons to use for results table  ###############
 seasons <- rasters_input %>% dplyr::select(starts_with("rfe")) %>% colnames()
 
 #### \\ Tables for scenario pixel results
@@ -113,6 +108,18 @@ BK <- BK %>%
          avcr = avcr(output_price=maize_farmgate_price, ap, input_price=N_price),
          mvcr = mvcr(output_price=maize_farmgate_price, mp, input_price=N_price)
   )
+
+########## +++++++ EXPORTING RESULTS +++++++ ###############
+
+#### \\ Keeping only useful columns to reduce size ####
+ZERO <- ZERO %>% select(index, gadm36_TZA_1,
+                        N_kgha,
+                        yield_mean,yield_sd, yield_cv, totfertcost, netrev_mean, netrev_sd, netrev_cv)
+BK <- BK %>% select(index, gadm36_TZA_1,
+                    N_kgha,
+                    yield_mean,yield_sd, yield_cv, totfertcost, netrev_mean, netrev_sd, netrev_cv,
+                    yield_gain_perc, totfertcost_gain_perc, netrev_gain_perc, ap, mp, avcr, mvcr)
+
 
 #### \\ Writing table ####
 data.table::fwrite(ZERO, paste0("results/tables/TZA_ZERO.csv"))
