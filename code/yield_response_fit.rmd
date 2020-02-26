@@ -9,22 +9,68 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE) 
 ```
 
-## Packages
+# Packages
 ```{r, message=FALSE}
 library(tidyverse)
 ```
 
-## Data
-This is the TZAPS yield measurements from 2016 and 2017 added with many layers of information from ISRIC, markus stacks, access from Jordan, CHIRPS season data (from 2016 and 2017), CGIAR-SRTM data.
+# Data
+This is the TZAPS yield measurements from 2016 and 2017 added with many layers of information from ISRIC, markus stacks, access from Jordan, CHIRPS season data (from 2016 and 2017), CGIAR-srtm data.
 This file was prepared in the *TZAPS_hhid_coords_extract.R* code.
 ```{r, message=FALSE}
 TZAPS <- read_csv("F:/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>% 
-  filter(!is.na(yld)) %>% 
-  select(-hhid)
+  filter(!is.na(yld)) %>%    #remove plots without yield data
+  filter(yld > 100) %>%     #outliers?
+  filter(TAMSAT_seas_rainfall > 300) %>%   # Deleting places where seasonal rainfall is too low
+  dplyr:: select(-K_kgha) %>%   #Probably not measured correctly
+  dplyr::select(-hhid, -district) %>%   #household ID and district should not be in the model
+  dplyr::select(-latitude, -longitude) %>%   #repeated columns in the Markus stack
+  dplyr::select(-sloped) %>% #better to use our own elevation and slope raster
+  mutate(highlands = as.factor(highlands)) %>% #RF does not like character variables
+  dplyr::select(-highlands) %>% #not significant, can be correlated with coordinates
+  #select(-CEC, -PH, -SND, -SOC) %>% #repeated SoilGrids layers, I will use I have in files.isric
+  #select(-WPOP) %>% #we already have improved population estimate from Worldpop
+  #dplyr::select(-acc100k, -acc50k, -accdar, -accprd) %>%    #access variables in the yield model?
+  dplyr::select(-BIO15, -TAMSAT_annual_rainfall) #%>%   #Delete rainfall columns
+  #rename(annual_rainfall = BIO12)  #the one that will be used for rainfall
+  #select(-TAMSAT_seas_rainfall) %>%   #incomplete data
+  #select(-CHIRPS_seas_rainfall) %>%   #to avoid autocorrelation
+
+  
 
 #We filter all the observations without yield. 
 head(TZAPS)
 ```
+# CHIRPS vs TAMSAT
+TAMSAT has considerably lower rainfall estimates:
+
+```{r, echo=FALSE}
+plot(TZAPS$CHIRPS_seas_rainfall , TZAPS$TAMSAT_seas_rainfall)
+abline(a=0,b=1)
+```
+
+
+# lm Yield prediction
+
+```{r}
+lm1 <- lm(yld~., TZAPS)
+summary(lm1)
+```
+
+## What about just some of the variables
+With CHIRPS data
+```{r}
+lm2 <- lm(yld ~ N_kgha  + year + intercrop + rotat1 + manure + cropres + weedings + herbicide_bin + pesticide_bin + impseed + disease + striga + logha + headage + femhead + hhsize + headeduc + srtm_TZA + srtm_slope_TZA + CHIRPS_seas_rainfall, data = TZAPS)
+summary(lm2)
+```
+With TAMSAT data
+```{r}
+lm3 <- lm(yld ~ N_kgha  + year + intercrop + rotat1 + manure + cropres + weedings + herbicide_bin + pesticide_bin + impseed + disease + striga + logha + headage + femhead + hhsize + headeduc + srtm_TZA + srtm_slope_TZA + TAMSAT_seas_rainfall, data = TZAPS)
+summary(lm3)
+```
+
+
+
 
 # Random Forest Yield prediction
 We need to check if there are any predictors with NA values
@@ -53,10 +99,11 @@ TZAPS$headeduc[is.na(TZAPS$headeduc)] <- mean(TZAPS$headeduc, na.rm=TRUE)
 
 
 Let's load the RF library
-```{r}
+```{r, message=FALSE}
 library(randomForest)
 ```
-## Tune The Forest
+## Model 1
+### Tune The Forest
 By "tune the forest", we mean the process of determining the optimal number of variables to consider at each split in a decision-tree. Too many prediction variables and the algorithm will over-fit; too few prediction variables and the algorithm will under-fit. so first, we use `tuneRF` function to get the possible optimal numbers of prediction variables. The `tuneRF` function takes two arguments: the prediction variables and the response variable.
 ```{r}
 trf <- tuneRF(x=TZAPS[,2:ncol(TZAPS)], # Prediction variables
@@ -69,12 +116,12 @@ trf <- tuneRF(x=TZAPS[,2:ncol(TZAPS)], # Prediction variables
 ```
 
 
-## Fit The Model
+### Fit The Model
 We create a model with the `randomForest` function which takes as arguments: the response variable the prediction variables and the optimal number of variables to consider at each split (estimated above). We also get the function to rank the prediction variables based on how much influence they have in the decision-trees' results.
 ```{r}
 yield.rf <- randomForest(yld~., TZAPS,
-                            mtry=mintree, # Number of variables in subset at each split
-                            importance = TRUE) # Assess importance of predictors.
+                         mtry=mintree, # Number of variables in subset at each split
+                         importance = TRUE) # Assess importance of predictors.
 yield.rf
 ```
 
@@ -88,13 +135,13 @@ RMSE of the optimal random forest
 (oob <- sqrt(yield.rf$mse[which.min(yield.rf$mse)]))
 ```
 We can have a look at each variable's influence by plotting their importance based on different indices given by the [importance function](https://www.rdocumentation.org/packages/randomForest/versions/4.6-14/topics/importance).
-```{r}
+```{r,fig.width=10, fig.height=6}
 varImpPlot(yield.rf)
 ```
 
-# Prediction Evaluation
+### Prediction Evaluation
 To assess the predictions, we will compare the observed maize yields (the training data) with the predicted maize yields (predicted using the training data). Considering that the training data, is in point form as opposed to raster, we will make a non-spatial prediction using the predict function in the "stats" package. We plot the observed and predicted values to see the trend. 
-```{r}
+```{r, echo=FALSE}
 pred <- stats::predict(yield.rf)
 
 rsq <- function (obs, pred) cor(obs, pred, use = 'complete.obs') ^ 2
@@ -104,7 +151,7 @@ plot_fitness <- function(obs, pred, name){
   rmse <- RMSE(obs, pred) %>% round(digits = 3)
   
   plot(x = obs, pred,
-       main = paste0(name, ". r2 = ", r2, ". RMSE = ", rmse))
+       main = paste0(name, ". Quick r2 = ", r2, ". RMSE = ", rmse))
   abline(a=0, b=1)
 }
 
@@ -112,18 +159,143 @@ plot_fitness(obs = TZAPS$yld,
              pred = pred,
              "Fitness")
 ```
-## Partial dependence plots
+### Partial dependence plots
 Partial dependence plots of selected variables
 ```{r}
-
-#imp <- importance(yield.rf)
-#impvar <- rownames(imp)[order(imp[, 1], decreasing=TRUE)][1:10]
-
-impvar <- c("N_kgha", "P_kgha", "K_kgha", "total_rainfall","elevation","slope","af_ORCDRC_T__M_sd1_1000m", "af_PHIHOX_T__M_sd1_1000m", "acc100k", "acc50k")
+library(caret)
+#plotting only the 10 most important variables
+impvar <- rownames(varImp(yield.rf))[order(varImp(yield.rf), decreasing = TRUE)]
+impvar <- impvar[1:10]
 op <- par(mfrow=c(2, 5))
 for (i in seq_along(impvar)) {
     partialPlot(yield.rf, as.data.frame(TZAPS), impvar[i], xlab=impvar[i],
                 main="Partial Dependence")
 }
 par(op)
+```
+Plotting dependence using the `pdp` package.
+```{r}
+library(pdp)
+pdp::partial(yield.rf, pred.var="TAMSAT_seas_rainfall", plot=TRUE)
+```
+
+We can save the model to a file and then load it with `readRDS` to use it with another set of predictors.
+```{r}
+saveRDS(yield.rf, "../results/models/yield.rf.rds")
+```
+
+
+## Random Forest model 2
+In this model, I'll remove many of the predictors that do not have much information about yield. This is to reduce the size of the file that will be used to predict.
+
+### Select the columns in the model
+```{r}
+TZAPS_subset <- TZAPS %>% dplyr::select(yld, N_kgha, intercrop, rotat1, manure,
+                                        cropres, weedings, impseed, fallow3yr,
+                                        struct, terraced, logha, headage, hhsize,
+                                        headeduc, year, srtm_TZA, srtm_slope_TZA,
+                                        af_ORCDRC_T__M_sd1_1000m_TZA,#Longitude, Latitude,
+                                        af_PHIHOX_T__M_sd1_1000m_TZA,
+                                        TAMSAT_seas_rainfall) %>% 
+  rename(seas_rainfall = TAMSAT_seas_rainfall)
+```
+
+
+### Tune The Forest
+```{r}
+trf <- tuneRF(x=TZAPS_subset[,2:ncol(TZAPS_subset)], # Prediction variables
+              y=TZAPS_subset$yld) # Response variable
+```
+
+`tuneRF` returns the several numbers of variables randomly sampled as candidates at each split (mtry). To build the model, we pick the number with the lowest [Out-of-Bag (OOB) error.](https://en.wikipedia.org/wiki/Out-of-bag_error) prediction error.
+```{r}
+(mintree <- trf[which.min(trf[,2]),1])
+```
+
+
+### Fit The Model
+We create a model with the `randomForest` function which takes as arguments: the response variable the prediction variables and the optimal number of variables to consider at each split (estimated above). We also get the function to rank the prediction variables based on how much influence they have in the decision-trees' results.
+```{r}
+yield.rf2 <- randomForest(yld~., TZAPS_subset,
+                         mtry=mintree, # Number of variables in subset at each split
+                         importance = TRUE) # Assess importance of predictors.
+yield.rf2
+```
+
+We can have a look at the model in detail by plotting it to see a plot of the number of trees against OOB error: the error rate as the number of trees increase. 
+```{r}
+plot(yield.rf2)
+```
+
+RMSE of the optimal random forest
+```{r}
+(oob <- sqrt(yield.rf2$mse[which.min(yield.rf2$mse)]))
+```
+We can have a look at each variable's influence by plotting their importance based on different indices given by the [importance function](https://www.rdocumentation.org/packages/randomForest/versions/4.6-14/topics/importance).
+```{r,fig.width=10, fig.height=6}
+varImpPlot(yield.rf2)
+```
+
+### Prediction Evaluation
+To assess the predictions, we will compare the observed maize yields (the training data) with the predicted maize yields (predicted using the training data). Considering that the training data, is in point form as opposed to raster, we will make a non-spatial prediction using the predict function in the "stats" package. We plot the observed and predicted values to see the trend. 
+```{r, echo=FALSE}
+pred <- stats::predict(yield.rf2)
+
+rsq <- function (obs, pred) cor(obs, pred, use = 'complete.obs') ^ 2
+RMSE <- function(obs, pred){sqrt(mean((pred - obs)^2, na.rm = TRUE))}
+plot_fitness <- function(obs, pred, name){
+  r2 <- rsq(obs, pred) %>% round(digits = 3)
+  rmse <- RMSE(obs, pred) %>% round(digits = 3)
+  
+  plot(x = obs, pred,
+       main = paste0(name, ". Quick r2 = ", r2, ". RMSE = ", rmse))
+  abline(a=0, b=1)
+}
+
+plot_fitness(obs = TZAPS_subset$yld,
+             pred = pred,
+             "Fitness")
+```
+
+### Partial dependence plots
+
+Partial dependence plots of the 10 most important variables
+
+```{r}
+library(caret)
+impvar <- rownames(varImp(yield.rf2))[order(varImp(yield.rf2), decreasing = TRUE)]
+impvar <- impvar[1:10]
+op <- par(mfrow=c(2, 5))
+for (i in seq_along(impvar)) {
+    partialPlot(yield.rf2, as.data.frame(TZAPS_subset), impvar[i], xlab=impvar[i],
+                main="Partial Dependence")
+}
+par(op)
+```
+
+We can save the model to a file and then load it with `readRDS` to use it with another set of predictors.
+```{r}
+saveRDS(yield.rf2, "../results/models/yield.rf2.rds")
+```
+
+# Mean values of household variables
+Because we don't have spatial surfaces of the household variables, we will use the mean values of these variables in the TZAPS as constants in the spatial predictions. This code below finds the mean values of the household characteristics found in the TZAPS.
+```{r}
+TZAPS %>% summarise(year = mean(year, na.rm=TRUE),
+                    intercrop = mean(intercrop, na.rm=TRUE),
+                    rotat1 = mean(rotat1, na.rm=TRUE),
+                    manure = mean(manure, na.rm=TRUE),
+                    cropres = mean(cropres, na.rm=TRUE),
+                    weedings = mean(weedings, na.rm=TRUE),
+                    impseed = mean(impseed, na.rm=TRUE),
+                    disease = mean(disease, na.rm=TRUE),
+                    striga = mean(striga, na.rm=TRUE),
+                    fallow3yr = mean(fallow3yr, na.rm=TRUE),
+                    struct = mean(struct, na.rm=TRUE),
+                    terraced = mean(terraced, na.rm=TRUE),
+                    logha = mean(logha, na.rm=TRUE),
+                    headage = mean(headage, na.rm=TRUE),
+                    femhead = mean(femhead, na.rm=TRUE),
+                    hhsize = mean(hhsize, na.rm=TRUE),
+                    headeduc = mean(headeduc, na.rm=TRUE)) %>% t()
 ```

@@ -4,8 +4,8 @@
 # It has one line per pixel with all the variables needed in the yield model and the prices for profitabilty.
 
 #### +++++++ CLEAN MEMORY +++++++ ####
-gc()
 rm(list=ls())
+gc()
 
 #### +++++++ PACKAGES +++++++ ####
 library(terra)
@@ -65,6 +65,7 @@ for (rainfall_raster in rainfall_rasters){
 
 #### KEEPING ONLY COMPLETE CASES, AND CALCULATING NEW VARIABLES
 rasters_input <- rasters_input[complete.cases(rasters_input),]
+
 
 #### PRINTING TO CHECK ####
 head(rasters_input)
