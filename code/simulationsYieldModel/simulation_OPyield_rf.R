@@ -23,7 +23,7 @@ t0 <- Sys.time()
 print(t0)
 
 #### +++++++ TABLE OF PIXEL VALUES +++++++ ####
-OPyield <- read.table(paste0("data/TZA_soilprice_table.txt"), header=TRUE, sep=" ")
+OPyield <- read.table("data/TZA_soilprice_table.txt", header=TRUE, sep=" ")
 
 #### +++++++ SIMULATION +++++++ #### 
 ########## \\ Constants of household variables to use in the simulation ###############
@@ -52,12 +52,12 @@ seasons <- OPyield %>% dplyr::select(starts_with("rfe")) %>% colnames()
 
 ########## \\ OPyield OPTIMIZATION ###############
 #pixel <- OPnetrev[1021,] #to test
-#Wrapper for the RF forest to be able to use it inside `optimize` function
+#Wrapper for the RF forest to be able to use it inside optimizer function
 rf_wrapper <- function(N_kgha, pixel){
   #N_kgha <- 4356  #to test
   pixel$N_kgha <- N_kgha
   yield <- predict(yield.rf, pixel)
-  return(-yield)  #Negative because nloptr works by minimization
+  return(-yield)  #Negative because nloptr is a minimization algorithm
 }
 
 #optimizer function to use inside apply
@@ -79,13 +79,13 @@ for(season in seasons){
   OPyield$seas_rainfall <- OPyield[[season]]  #seasonal rainfall to simulate
   #optim_pixel(OPyield[9864,])  #to test
   
-  #appplyting optimize function
+  #applying optimize function
   solutions <- parApply(cl = cl, X = OPyield, MARGIN = 1, FUN = optim_pixel)  #parallel version
   #solutions <- apply(X = OPyield[1:20,], MARGIN = 1, FUN = optim_pixel)  #not parallel version
    
   #storing results
   OPyield[, paste0("N_kgha_", season)] <- floor(solutions[1,])  #floor to just store integers
-  OPyield[, paste0("yield_", season)] <- floor(-solutions[1,])  #floor to just store integers. Need to invert negative from rf_wrapper
+  OPyield[, paste0("yield_", season)] <- floor(-solutions[2,])  #floor to just store integers. Need to invert negative from rf_wrapper
   
   #Calculating netrev
   #netrev = yield*farmgate_price-N_kgha*N_price

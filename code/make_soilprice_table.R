@@ -31,12 +31,12 @@ rasters_input <- cbind(rasters_input, values(gadm36_TZA_1))
                
 
 ########## ISRIC RASTERS  ############### 
-af_ORCDRC_T__M_sd1_1000m_TZA <- rast("F:/Work/Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd1_1000m_TZA.tif")
-af_PHIHOX_T__M_sd1_1000m_TZA <- rast("F:/Work/Ex-Ante/data/files.isric.org/af_PHIHOX_T__M_sd1_1000m_TZA.tif")
+af_ORCDRC_T__M_sd1_5000m_TZA <- rast("F:/Work/Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd1_5000m_TZA.tif")
+af_PHIHOX_T__M_sd1_5000m_TZA <- rast("F:/Work/Ex-Ante/data/files.isric.org/af_PHIHOX_T__M_sd1_5000m_TZA.tif")
 
 rasters_input <- cbind(rasters_input,
-                       values(af_ORCDRC_T__M_sd1_1000m_TZA),
-                       values(af_PHIHOX_T__M_sd1_1000m_TZA))
+                       values(af_ORCDRC_T__M_sd1_5000m_TZA),
+                       values(af_PHIHOX_T__M_sd1_5000m_TZA))
 
 #### N AND MAIZE PRICES ####
 # I will use a constant N_price for now. $1 USD/kg of N

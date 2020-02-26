@@ -18,7 +18,8 @@ library(tidyverse)
 This is the TZAPS yield measurements from 2016 and 2017 added with many layers of information from ISRIC, markus stacks, access from Jordan, CHIRPS season data (from 2016 and 2017), CGIAR-srtm data.
 This file was prepared in the *TZAPS_hhid_coords_extract.R* code.
 ```{r, message=FALSE}
-TZAPS <- read_csv("F:/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>% 
+#TZAPS <- read_csv("F:/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>% 
+TZAPS <- read_csv("/media/sp/SPHD/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>%    #if working in linux
   filter(!is.na(yld)) %>%    #remove plots without yield data
   filter(yld > 100) %>%     #outliers?
   filter(TAMSAT_seas_rainfall > 300) %>%   # Deleting places where seasonal rainfall is too low
@@ -194,8 +195,8 @@ TZAPS_subset <- TZAPS %>% dplyr::select(yld, N_kgha, intercrop, rotat1, manure,
                                         cropres, weedings, impseed, fallow3yr,
                                         struct, terraced, logha, headage, hhsize,
                                         headeduc, year, srtm_TZA, srtm_slope_TZA,
-                                        af_ORCDRC_T__M_sd1_1000m_TZA,#Longitude, Latitude,
-                                        af_PHIHOX_T__M_sd1_1000m_TZA,
+                                        af_ORCDRC_T__M_sd1_5000m_TZA,#Longitude, Latitude,
+                                        af_PHIHOX_T__M_sd1_5000m_TZA,
                                         TAMSAT_seas_rainfall) %>% 
   rename(seas_rainfall = TAMSAT_seas_rainfall)
 ```
