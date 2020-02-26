@@ -12,7 +12,7 @@ library(terra)
 library(tidyverse)
 
 ########## RASTER TO USE FOR BUILDING TABLE AND AS TEMPLATE TO WARP  ############### 
-srtm_TZA <- rast("data/CGIAR-srtm/srtm_TZA.tif")
+srtm_TZA <- rast("data/CGIAR-SRTM/srtm_TZA.tif")
 
 #### ADDING PIXEL INDEX
 index <- 1:(dim(srtm_TZA)[1] * dim(srtm_TZA)[2])
@@ -21,7 +21,7 @@ colnames(rasters_input) <- "index"
 
 ########## ADDDING ELEVATION AND SLOPE TO THE TABLE  ############### 
 #startging the table that will be exported
-srtm_slope_TZA <- rast("data/CGIAR-srtm/srtm_slope_TZA.tif")
+srtm_slope_TZA <- rast("data/CGIAR-SRTM/srtm_slope_TZA.tif")
 
 rasters_input <- cbind(rasters_input, values(srtm_TZA) , values(srtm_slope_TZA))
 
@@ -31,8 +31,8 @@ rasters_input <- cbind(rasters_input, values(gadm36_TZA_1))
                
 
 ########## ISRIC RASTERS  ############### 
-af_ORCDRC_T__M_sd1_5000m_TZA <- rast("F:/Work/Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd1_5000m_TZA.tif")
-af_PHIHOX_T__M_sd1_5000m_TZA <- rast("F:/Work/Ex-Ante/data/files.isric.org/af_PHIHOX_T__M_sd1_5000m_TZA.tif")
+af_ORCDRC_T__M_sd1_5000m_TZA <- rast("/media/sp/SPHD/Work/Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd1_5000m_TZA.tif")
+af_PHIHOX_T__M_sd1_5000m_TZA <- rast("/media/sp/SPHD/Work/Ex-Ante/data/files.isric.org/af_PHIHOX_T__M_sd1_5000m_TZA.tif")
 
 rasters_input <- cbind(rasters_input,
                        values(af_ORCDRC_T__M_sd1_5000m_TZA),
