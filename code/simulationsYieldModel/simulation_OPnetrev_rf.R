@@ -87,7 +87,7 @@ for(season in seasons){
   
   #predicting yield for that season
   OPnetrev[paste0("OPnetrev_yield_", season)] <- predict(yield.rf2, OPnetrev)
-
+  
   #calculating net revenue from that 
   OPnetrev[paste0("OPnetrev_netrev_", season)] <- OPnetrev[paste0("OPnetrev_yield_", season)]*OPnetrev$maize_farmgate_price - OPnetrev$totfertcost
   
@@ -133,10 +133,10 @@ OPnetrev$mvcr[OPnetrev$N_kgha==0] <- NA
 
 ########## +++++++ EXPORTING RESULTS +++++++ ###############
 #### \\ Keeping only useful columns to reduce size ####
-OPnetrev <- OPnetrev %>% select(index, gadm36_TZA_1,
-                                N_kgha,
-                                yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
-                                yield_gain_perc, totfertcost_gain_perc, netrev_gain_perc, ap, mp, avcr, mvcr)
+OPnetrev <- OPnetrev %>% dplyr::select(index, gadm36_TZA_1,
+                                       N_kgha,
+                                       yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
+                                       yield_gain_perc, totfertcost_gain_perc, netrev_gain_perc, ap, mp, avcr, mvcr)
 
 #### \\ Writing table of pixel results
 data.table::fwrite(OPnetrev, "results/tables/TZA_OPnetrev.csv")

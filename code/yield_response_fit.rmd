@@ -277,6 +277,7 @@ par(op)
 We can save the model to a file and then load it with `readRDS` to use it with another set of predictors.
 ```{r}
 saveRDS(yield.rf2, "../results/models/yield.rf2.rds")
+save(yield.rf2, file="../results/models/yield.rf2.rda")
 ```
 
 # Mean values of household variables

@@ -58,7 +58,7 @@ for(season in seasons){
   #applying optimize function
   solutions <- parApply(cl = cl, X = OPyield, MARGIN = 1, FUN = optim_pixel)  #parallel version
   #solutions <- apply(X = OPyield[1:20,], MARGIN = 1, FUN = optim_pixel)  #not parallel version
-   
+  
   #storing results
   OPyield[, paste0("N_kgha_", season)] <- floor(solutions[1,])  #floor to just store integers
   OPyield[, paste0("yield_", season)] <- floor(-solutions[2,])  #floor to just store integers. Need to invert negative from rf_wrapper
@@ -130,10 +130,10 @@ OPyield$mvcr[OPyield$N_kgha==0] <- NA
 
 ########## +++++++ EXPORTING RESULTS +++++++ ###############
 #### \\ Keeping only useful columns to reduce size ####
-OPyield <- OPyield %>% select(index, gadm36_TZA_1,
-                              N_kgha,
-                              yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
-                              yield_gain_perc, totfertcost_gain_perc, netrev_gain_perc, ap, mp, avcr, mvcr)
+OPyield <- OPyield %>% dplyr::select(index, gadm36_TZA_1,
+                                     N_kgha,
+                                     yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
+                                     yield_gain_perc, totfertcost_gain_perc, netrev_gain_perc, ap, mp, avcr, mvcr)
 
 #### \\ Writing table of pixel results
 data.table::fwrite(OPyield, "results/tables/TZA_OPyield.csv")
