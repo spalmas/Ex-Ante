@@ -63,9 +63,30 @@ for (rainfall_raster in rainfall_rasters){
   seasons <- c(seasons, names(rainfall))
 }
 
-#### KEEPING ONLY COMPLETE CASES, AND CALCULATING NEW VARIABLES
+#### KEEPING ONLY COMPLETE CASES
 rasters_input <- rasters_input[complete.cases(rasters_input),]
 
+#### ADDING CONSTANT SOCIOECONOMIC VARIABLES FOUND IN TZAPS
+rasters_input <- cbind(
+  rasters_input,
+  year           = 2.016310e+03,
+  intercrop      = 5.643225e-01,
+  rotat1         = 6.346484e-02,
+  manure         = 1.972556e-01,
+  cropres        = 9.262436e-02,
+  weedings       = 1.826758e+00,
+  impseed        = 1.355060e-01,
+  disease        = 1.320755e-01,
+  striga         = 3.430532e-02,
+  fallow3yr      = 4.116638e-02,
+  struct         = 2.521441e-01,
+  terraced       = 3.430532e-02,
+  logha          = -5.170819e-01,
+  headage        = 4.777208e+01,
+  femhead        = 1.360424e-01,
+  hhsize         = 5.655232e+00,
+  headeduc       = 7.051237e+00
+)
 
 #### PRINTING TO CHECK ####
 head(rasters_input)

@@ -12,33 +12,12 @@ library(tidyverse)
 source("code/buildraster.R")
 source("code/fertilizer_prof_measures.R")
 source("code/yield_response.R")
-yield.rf <- readRDS("results/models/yield.rf2.rds")
+load("results/models/yield.rf2.rda")  #loading random forest model. `load` has less problems than `readRDS` that I think changes the file somehow
 
 #### +++++++ TABLE OF PIXEL VALUES +++++++ ####
 rasters_input <- read.table("data/TZA_soilprice_table.txt", header=TRUE, sep=" ")
 
 ########## +++++++ SIMULATION +++++++ ###############
-########## \\ Constants of household variables to use in the simulation ###############
-rasters_input <- rasters_input %>% mutate(
-  year           = 2.016310e+03,
-  intercrop      = 5.643225e-01,
-  rotat1         = 6.346484e-02,
-  manure         = 1.972556e-01,
-  cropres        = 9.262436e-02,
-  weedings       = 1.826758e+00,
-  impseed        = 1.355060e-01,
-  disease        = 1.320755e-01,
-  striga         = 3.430532e-02,
-  fallow3yr      = 4.116638e-02,
-  struct         = 2.521441e-01,
-  terraced       = 3.430532e-02,
-  logha          = -5.170819e-01,
-  headage        = 4.777208e+01,
-  femhead        = 1.360424e-01,
-  hhsize         = 5.655232e+00,
-  headeduc       = 7.051237e+00,
-)
-
 ########## \\ Getting the names of rainfall seasons to use for results table  ###############
 seasons <- rasters_input %>% dplyr::select(starts_with("rfe")) %>% colnames()
 
@@ -48,20 +27,18 @@ ZERO <- BK <- rasters_input
 ########## \\ ZERO Scenario ###############
 #Nitrogen application
 ZERO$N_kgha <- 0
+ZERO$totfertcost <- ZERO$N_kgha * ZERO$N_price   #this is 0, I have add it for code consistency
 
 #Running yield model for all seasons of rainfall
 for(season in seasons){
   ZERO$seas_rainfall <- ZERO[[season]]  #seasonal rainfall to simulate
-  ZERO[paste0("yield_", season)] <- predict(yield.rf, ZERO)
+  ZERO[paste0("yield_", season)] <- predict(yield.rf2, ZERO)
   ZERO[paste0("netrev_", season)] <- ZERO[paste0("yield_", season)]*ZERO$maize_farmgate_price
   print (paste0("ZERO: Finished: ", season))
 }
 
 #Calculating mean, sd and cv using the season results
 ZERO$yield_mean <- ZERO[,paste0("yield_", seasons)] %>% rowMeans(na.rm = TRUE)
-ZERO$yield_sd <- apply(ZERO[,paste0("yield_", seasons)], 1, sd, na.rm=TRUE)
-ZERO$yield_cv <- 100*ZERO$yield_sd/ZERO$yield_mean
-ZERO$totfertcost <- 0
 ZERO$netrev_mean <- ZERO[,paste0("netrev_", seasons)] %>% rowMeans(na.rm = TRUE)
 ZERO$netrev_sd <- apply(ZERO[,paste0("netrev_", seasons)], 1, sd, na.rm=TRUE)
 ZERO$netrev_cv <- 100*ZERO$netrev_sd/ZERO$netrev_mean
@@ -70,33 +47,31 @@ ZERO$netrev_cv <- 100*ZERO$netrev_sd/ZERO$netrev_mean
 ########## \\ BK Blanket Scenario ###############
 #Nitrogen application
 BK$N_kgha <- 100
+BK$totfertcost <- BK$N_kgha * BK$maize_farmgate_price
 
 #Running yield model for all seasons of rainfall
 for(season in seasons){
   BK$seas_rainfall <- BK[[season]]  #seasonal rainfall to simulate
-  BK[paste0("yield_", season)] <-  predict(yield.rf, BK)
-  BK[paste0("netrev_", season)] <- BK[paste0("yield_", season)]*BK$maize_farmgate_price
+  BK[paste0("yield_", season)] <-  predict(yield.rf2, BK)
+  BK[paste0("netrev_", season)] <- BK[paste0("yield_", season)]*BK$maize_farmgate_price - BK$totfertcost
   print (paste0("BK: Finished: ", season))
 }
 
 #Calculating mean, sd and cv using the season results
 BK$yield_mean <- BK[,paste0("yield_", seasons)] %>% rowMeans(na.rm = TRUE)
-BK$yield_sd <- apply(BK[,paste0("yield_", seasons)], 1, sd, na.rm=TRUE)
-BK$yield_cv <- 100*BK$yield_sd/BK$yield_mean
-BK$totfertcost <- BK$N_kgha * BK$maize_farmgate_price
 BK$netrev_mean <- BK[,paste0("netrev_", seasons)] %>% rowMeans(na.rm = TRUE)
 BK$netrev_sd <- apply(BK[,paste0("netrev_", seasons)], 1, sd, na.rm=TRUE)
 BK$netrev_cv <- 100*BK$netrev_sd/BK$netrev_mean
 
 
 #### \\ Calculating Yield0 for mvcr  ####
-BK0 <- BK
-#Getting amount of fertilizer with one unit less
-BK0$N_kgha <- BK$N_kgha-1
+#Getting amount of fertilizer with one unit less using the mean optimized N_kgha
+#we are using a different table to avoid erasing values in original table that will later be exported
+BK0 <- BK %>% mutate(N_kgha = N_kgha - 1)
 BK0$N_kgha[BK0$N_kgha<0] <- 0  #just in case some OPyield$N_kgha were negative
 
 #Yield0
-yield0 <- predict(yield.rf, BK0)
+BK0$yield <- predict(yield.rf2, BK0)
 
 #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for BK using the mean results####
 BK <- BK %>% 
@@ -104,20 +79,19 @@ BK <- BK %>%
          totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
          netrev_gain_perc = 100*(netrev_mean-ZERO$netrev_mean)/ZERO$netrev_mean,
          ap = ap(yield1=yield_mean, N_kgha1=N_kgha),
-         mp = mp(yield1=yield_mean, yield0=yield0, N_kgha1=N_kgha, N_kgha0=BK0$N_kgha),
+         mp = mp(yield1=yield_mean, yield0=BK0$yield, N_kgha1=N_kgha, N_kgha0=BK0$N_kgha),
          avcr = avcr(output_price=maize_farmgate_price, ap, input_price=N_price),
          mvcr = mvcr(output_price=maize_farmgate_price, mp, input_price=N_price)
   )
 
 ########## +++++++ EXPORTING RESULTS +++++++ ###############
-
 #### \\ Keeping only useful columns to reduce size ####
 ZERO <- ZERO %>% select(index, gadm36_TZA_1,
                         N_kgha,
-                        yield_mean,yield_sd, yield_cv, totfertcost, netrev_mean, netrev_sd, netrev_cv)
+                        yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv)
 BK <- BK %>% select(index, gadm36_TZA_1,
                     N_kgha,
-                    yield_mean,yield_sd, yield_cv, totfertcost, netrev_mean, netrev_sd, netrev_cv,
+                    yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
                     yield_gain_perc, totfertcost_gain_perc, netrev_gain_perc, ap, mp, avcr, mvcr)
 
 
@@ -128,17 +102,13 @@ data.table::fwrite(BK, "results/tables/TZA_BK.csv")
 #### \\ Writing rasters ####
 template <- rast("data/CGIAR-SRTM/srtm_TZA.tif")
 writeRaster(buildraster(ZERO$yield_mean, rasters_input, template), filename="results/tif/TZA_ZERO_yield_mean.tif", overwrite=TRUE)
-writeRaster(buildraster(ZERO$yield_sd, rasters_input, template), filename="results/tif/TZA_ZERO_yield_sd.tif", overwrite=TRUE)
-writeRaster(buildraster(ZERO$yield_cv, rasters_input, template), filename="results/tif/TZA_ZERO_yield_cv.tif", overwrite=TRUE)
 writeRaster(buildraster(ZERO$totfertcost, rasters_input, template), filename="results/tif/TZA_ZERO_totfertcost.tif", overwrite=TRUE)
 writeRaster(buildraster(ZERO$netrev_mean, rasters_input, template), filename="results/tif/TZA_ZERO_netrev_mean.tif", overwrite=TRUE)
 writeRaster(buildraster(ZERO$netrev_sd, rasters_input, template), filename="results/tif/TZA_ZERO_netrev_sd.tif", overwrite=TRUE)
 writeRaster(buildraster(ZERO$netrev_cv, rasters_input, template), filename="results/tif/TZA_ZERO_netrev_mean.tif", overwrite=TRUE)
 
-writeRaster(buildraster(BK$yield_mean, rasters_input, template), filename="results/tif/TZA_BK_yield_mean.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$yield_sd, rasters_input, template), filename="results/tif/TZA_BK_yield_sd.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$yield_cv, rasters_input, template), filename="results/tif/TZA_BK_yield_cv.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$N_kgha, rasters_input, template), filename="results/tif/TZA_BK_N_kgha.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$yield_mean, rasters_input, template), filename="results/tif/TZA_BK_yield_mean.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$totfertcost, rasters_input, template), filename="results/tif/TZA_BK_totfertcost.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$netrev_mean, rasters_input, template), filename="results/tif/TZA_BK_netrev_mean.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$netrev_sd, rasters_input, template), filename="results/tif/TZA_BK_netrev_sd.tif", overwrite=TRUE)
