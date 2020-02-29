@@ -9,6 +9,7 @@ library(dplyr)
 library(magrittr)
 library(nloptr)  #for optimization algorithm
 library(parallel)
+library(randomForest)
 library(terra)
 
 #### +++++++ SCRIPTS +++++++ ####
@@ -133,16 +134,32 @@ OPnetrev$mvcr[OPnetrev$N_kgha==0] <- NA
 
 ########## +++++++ EXPORTING RESULTS +++++++ ###############
 #### \\ Keeping only useful columns to reduce size ####
-OPnetrev <- OPnetrev %>% dplyr::select(index, gadm36_TZA_1,
+OPnetrev <- OPnetrev %>% dplyr::select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
                                        N_kgha,
                                        yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
                                        yield_gain_perc, totfertcost_gain_perc, netrev_gain_perc, ap, mp, avcr, mvcr)
 
-#### \\ Writing table of pixel results
+#### \\ Writing rasters with no SPAM mask ####
+template <- rast("data/CGIAR-SRTM/srtm_slope_TZA.tif")
+writeRaster(buildraster(OPnetrev$N_kgha, OPnetrev, template), filename="results/tif/TZA_OPnetrev_N_kgha_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$yield_mean, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$totfertcost, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$netrev_mean, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$netrev_sd, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_sd_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$netrev_cv, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_cv_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$yield_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$totfertcost_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$netrev_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$avcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_avcr_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_mvcr_noMask.tif", overwrite=TRUE)
+
+
+#### \\ Writing tables and rasters for analysis and visualization ####
+#This means removing SPAM values from the table and rasters
+OPnetrev <- OPnetrev[complete.cases(OPnetrev),]
+
 data.table::fwrite(OPnetrev, "results/tables/TZA_OPnetrev.csv")
 
-#### \\ Writing rasters
-template <- rast("data/CGIAR-SRTM/srtm_slope_TZA.tif")
 writeRaster(buildraster(OPnetrev$N_kgha, OPnetrev, template), filename="results/tif/TZA_OPnetrev_N_kgha.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$yield_mean, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$totfertcost, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost.tif", overwrite=TRUE)
@@ -154,6 +171,7 @@ writeRaster(buildraster(OPnetrev$totfertcost_gain_perc, OPnetrev, template), fil
 writeRaster(buildraster(OPnetrev$netrev_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_gain_perc.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$avcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_avcr.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_mvcr.tif", overwrite=TRUE)
+
 
 #### +++++++ TIMING +++++++ ####
 print(paste0("Finished: ", Sys.time() - t0))

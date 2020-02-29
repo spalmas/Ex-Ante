@@ -5,6 +5,7 @@ rm(list=ls())
 gc()
 
 #### +++++++ PACKAGES +++++++ ####
+library(randomForest)
 library(terra)
 library(tidyverse)
 
@@ -86,35 +87,58 @@ BK <- BK %>%
 
 ########## +++++++ EXPORTING RESULTS +++++++ ###############
 #### \\ Keeping only useful columns to reduce size ####
-ZERO <- ZERO %>% select(index, gadm36_TZA_1,
+ZERO <- ZERO %>% select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
                         N_kgha,
                         yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv)
-BK <- BK %>% select(index, gadm36_TZA_1,
+BK <- BK %>% select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
                     N_kgha,
                     yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
                     yield_gain_perc, totfertcost_gain_perc, netrev_gain_perc, ap, mp, avcr, mvcr)
 
 
-#### \\ Writing table ####
+#### \\ Writing rasters with no SPAM mask ####
+template <- rast("data/CGIAR-SRTM/srtm_TZA.tif")
+writeRaster(buildraster(ZERO$yield_mean, ZERO, template), filename="results/tif/TZA_ZERO_yield_mean_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$totfertcost, ZERO, template), filename="results/tif/TZA_ZERO_totfertcost_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$netrev_mean, ZERO, template), filename="results/tif/TZA_ZERO_netrev_mean_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$netrev_sd, ZERO, template), filename="results/tif/TZA_ZERO_netrev_sd_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$netrev_cv, ZERO, template), filename="results/tif/TZA_ZERO_netrev_mean_noMask.tif", overwrite=TRUE)
+
+writeRaster(buildraster(BK$N_kgha, BK, template), filename="results/tif/TZA_BK_N_kgha_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$yield_mean, BK, template), filename="results/tif/TZA_BK_yield_mean_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$totfertcost, BK, template), filename="results/tif/TZA_BK_totfertcost_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$netrev_mean, BK, template), filename="results/tif/TZA_BK_netrev_mean_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$netrev_sd, BK, template), filename="results/tif/TZA_BK_netrev_sd_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$netrev_cv, BK, template), filename="results/tif/TZA_BK_netrev_cv_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$yield_gain_perc, BK, template), filename="results/tif/TZA_BK_yield_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$totfertcost_gain_perc, BK, template), filename="results/tif/TZA_BK_totfertcost_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$netrev_gain_perc, BK, template), filename="results/tif/TZA_BK_netrev_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$mvcr, BK, template), filename="results/tif/TZA_BK_mvcr_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$avcr, BK, template), filename="results/tif/TZA_BK_avcr_noMask.tif", overwrite=TRUE)
+
+
+#### \\ Writing tables and rasters for analysis and visualization ####
+#This means removing SPAM values from the table and rasters
+ZERO <- ZERO[complete.cases(ZERO),]
+BK <- BK[complete.cases(BK),]
+
 data.table::fwrite(ZERO, "results/tables/TZA_ZERO.csv")
 data.table::fwrite(BK, "results/tables/TZA_BK.csv")
 
-#### \\ Writing rasters ####
-template <- rast("data/CGIAR-SRTM/srtm_TZA.tif")
-writeRaster(buildraster(ZERO$yield_mean, rasters_input, template), filename="results/tif/TZA_ZERO_yield_mean.tif", overwrite=TRUE)
-writeRaster(buildraster(ZERO$totfertcost, rasters_input, template), filename="results/tif/TZA_ZERO_totfertcost.tif", overwrite=TRUE)
-writeRaster(buildraster(ZERO$netrev_mean, rasters_input, template), filename="results/tif/TZA_ZERO_netrev_mean.tif", overwrite=TRUE)
-writeRaster(buildraster(ZERO$netrev_sd, rasters_input, template), filename="results/tif/TZA_ZERO_netrev_sd.tif", overwrite=TRUE)
-writeRaster(buildraster(ZERO$netrev_cv, rasters_input, template), filename="results/tif/TZA_ZERO_netrev_mean.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$yield_mean, ZERO, template), filename="results/tif/TZA_ZERO_yield_mean.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$totfertcost, ZERO, template), filename="results/tif/TZA_ZERO_totfertcost.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$netrev_mean, ZERO, template), filename="results/tif/TZA_ZERO_netrev_mean.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$netrev_sd, ZERO, template), filename="results/tif/TZA_ZERO_netrev_sd.tif", overwrite=TRUE)
+writeRaster(buildraster(ZERO$netrev_cv, ZERO, template), filename="results/tif/TZA_ZERO_netrev_mean.tif", overwrite=TRUE)
 
-writeRaster(buildraster(BK$N_kgha, rasters_input, template), filename="results/tif/TZA_BK_N_kgha.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$yield_mean, rasters_input, template), filename="results/tif/TZA_BK_yield_mean.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$totfertcost, rasters_input, template), filename="results/tif/TZA_BK_totfertcost.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$netrev_mean, rasters_input, template), filename="results/tif/TZA_BK_netrev_mean.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$netrev_sd, rasters_input, template), filename="results/tif/TZA_BK_netrev_sd.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$netrev_cv, rasters_input, template), filename="results/tif/TZA_BK_netrev_cv.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$yield_gain_perc, rasters_input, template), filename="results/tif/TZA_BK_yield_gain_perc.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$totfertcost_gain_perc, rasters_input, template), filename="results/tif/TZA_BK_totfertcost_gain_perc.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$netrev_gain_perc, rasters_input, template), filename="results/tif/TZA_BK_netrev_gain_perc.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$mvcr, rasters_input, template), filename="results/tif/TZA_BK_mvcr.tif", overwrite=TRUE)
-writeRaster(buildraster(BK$avcr, rasters_input, template), filename="results/tif/TZA_BK_avcr.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$N_kgha, BK, template), filename="results/tif/TZA_BK_N_kgha.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$yield_mean, BK, template), filename="results/tif/TZA_BK_yield_mean.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$totfertcost, BK, template), filename="results/tif/TZA_BK_totfertcost.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$netrev_mean, BK, template), filename="results/tif/TZA_BK_netrev_mean.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$netrev_sd, BK, template), filename="results/tif/TZA_BK_netrev_sd.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$netrev_cv, BK, template), filename="results/tif/TZA_BK_netrev_cv.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$yield_gain_perc, BK, template), filename="results/tif/TZA_BK_yield_gain_perc.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$totfertcost_gain_perc, BK, template), filename="results/tif/TZA_BK_totfertcost_gain_perc.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$netrev_gain_perc, BK, template), filename="results/tif/TZA_BK_netrev_gain_perc.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$mvcr, BK, template), filename="results/tif/TZA_BK_mvcr.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$avcr, BK, template), filename="results/tif/TZA_BK_avcr.tif", overwrite=TRUE)

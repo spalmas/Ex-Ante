@@ -32,7 +32,9 @@ rasters_input <- cbind(rasters_input, values(gadm36_TZA_1))
 
 ########## SPAM MAIZE PHYSICAL AREA  ############### 
 SPAM2010 <- rast("data/SPAM/spam2010V1r1_global_A_MAIZ_A_TZA.tif")
-
+rasters_input <- cbind(rasters_input,
+                       values(SPAM2010))
+                       
 ########## ISRIC RASTERS  ############### 
 af_ORCDRC_T__M_sd1_5000m_TZA <- rast("/media/sp/SPHD/Work/Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd1_5000m_TZA.tif")
 af_PHIHOX_T__M_sd1_5000m_TZA <- rast("/media/sp/SPHD/Work/Ex-Ante/data/files.isric.org/af_PHIHOX_T__M_sd1_5000m_TZA.tif")
@@ -67,7 +69,9 @@ for (rainfall_raster in rainfall_rasters){
 }
 
 #### KEEPING ONLY COMPLETE CASES
-rasters_input <- rasters_input[complete.cases(rasters_input),]
+#SPAM will not count for the complete cases because we want to simulate all Tanzania for TZAPS compare.
+#We just need SPAM for reasonable crop area calculations and for visualization
+rasters_input <- rasters_input[complete.cases(rasters_input[, colnames(rasters_input) != "spam2010V1r1_global_A_MAIZ_A_TZA"]),]
 
 #### ADDING CONSTANT SOCIOECONOMIC VARIABLES FOUND IN TZAPS
 rasters_input <- cbind(
