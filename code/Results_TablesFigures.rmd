@@ -23,7 +23,7 @@ library(tidyverse)
 
 Other needed scripts:
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-source('../code/fitness.r')
+source('../code/fitness.R')
 
 #Colorblind safe palette
 cbbPalette <- c("#FFFFFF", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -49,7 +49,8 @@ Using maize prices collected at known markets across Tanzania in 2015, we predic
 The model for maize market price had high fitness with the maize price from known locations (Figure X).
 ```{r, echo=FALSE, warning=FALSE, fig.height=3, fig.width=3,, fig.cap="Figure X. Observed vs predicted maize market prices from a Random Forest model."}
 maize_farmgate_price <- rast("../data/prices/maize_farmgate_price/TZ_maipkghat_fgprice.tif") / 1598 #to convert from Tsh/kg to USD/kg 2013 prices
-maize_price_table <- read.csv("F:/Work/LSMS/TZA/maize_prices_2015/local_maize_prices_2015.csv")
+#maize_price_table <- read.csv("F:/Work/LSMS/TZA/maize_prices_2015/local_maize_prices_2015.csv")
+maize_price_table <- read.csv("/media/sp/SPHD/Work/LSMS/TZA/maize_prices_2015/local_maize_prices_2015.csv")
 maize_price_vect <- vect( cbind(maize_price_table$lon_modified, maize_price_table$lat_modified), atts=maize_price_table,
                           crs="+proj=longlat +datum=WGS84 +no_defs")
 maize_price_vect <- terra::project(maize_price_vect, crs=crs(maize_farmgate_price))
@@ -101,7 +102,6 @@ To test the profitability of different fertilization scenarios, we simulated fou
 * *OPnetrev*: Optimized to get the highest net revenue
 
 These are some issues with the simulation:
-* Because of the model definition, after a certain market access level (~1900), yields become negative. To correct for this, if the yield_response function returns a negative or zero value, the output of the function will be NA.
 
 We compared yields, total fertilization costs and predicted revenues from these scenarios. We also compare the average and marginal value cost ratios (AVCR and MVCR). AVCR is the average physical product (quantity of output per unit of variable input for any input level) multiplied by the value-cost ratio. An AVCR value exceeding 1 indicates profitability, while an AVCR value of 2 is often used as a shorthand criterion for economic attractiveness of an investment from the perspective of a risk-averse farmer. MVCR is the marginal physical product (the change in yield deriving from an additional kg/ha of input) and multiplied by the value-cost ratio. An MVCR value exceeding 0 indicates than a risk-neutral farmer should invest more, as marginal returns are still positive. 
 
@@ -126,6 +126,8 @@ Table X: Summary statistics for yields, total fertilization costs and netrevenue
 ```{r, echo=FALSE, warning=FALSE}
 #Low and high netrev values will bebased on 10 and 90% percenties of the ZERO simulation
 ZERO <- read.csv('../results/tables/TZA_ZERO.csv') 
+
+#Low and high revenue from the ZERO simulation
 low_netrev <- quantile(ZERO$netrev_mean, 0.10, na.rm=TRUE)  #10% percentile of the net revenue. The quantile function does not consider the Inf values.
 high_netrev <- quantile(ZERO$netrev_mean, 0.90, na.rm=TRUE)  #90% percentile of the net revenue. The quantile function does not consider the Inf values. 
 
@@ -140,7 +142,7 @@ columns <- c('Scenario',
              paste0("Low netrev area % (<", round(low_netrev), " USD/ha)"),
              paste0("High netrev area % (>", round(high_netrev), " USD/ha)"))
 ranges <- matrix(nrow = length(scenarios)*2 - 1, ncol = length(columns)) %>% as_tibble()
-ranges[,1] <- c( 'ZERO','BK', 'OPyield', 'OPnetrev','BK_gain_perc','OPyield_gain_perc','OPnetrev_mean_gain_perc') 
+ranges[,1] <- c( 'ZERO','BK', 'OPyield', 'OPnetrev','BK_gain_perc','OPyield_mean_gain_perc','OPnetrev_mean_gain_perc') 
 colnames(ranges) <- columns
 
 #COUNTRY <- 'TZA'
@@ -173,8 +175,8 @@ for (s in scenarios){
   }
   
   #### \\  areas under and above lower and upper net revenue values ####
-  ranges[r, 11] <- 100 * sum(results$netrev<=low_netrev, na.rm = TRUE)/maize_area
-  ranges[r, 12] <- 100 * sum(results$netrev>=high_netrev, na.rm = TRUE)/maize_area
+  ranges[r, 11] <- 100 * sum(results$netrev_mean<=low_netrev, na.rm = TRUE)/maize_area
+  ranges[r, 12] <- 100 * sum(results$netrev_mean>=high_netrev, na.rm = TRUE)/maize_area
   
   #Changing row for change in scenario sJ
   r <- r + 1
@@ -192,21 +194,19 @@ for (s in scenarios){
   #s <- 'BK'  #to test
   #### \\ Reading pixel result tables  ####
   results <- read.csv(paste0('../results/tables/TZA_',s,'.csv'))
-  value <- cbind(s, yield=results$yield_mean) %>% as_tibble()
-  value$yield <- as.numeric(value$yield)
+  value <- cbind.data.frame(s, yield_mean=results$yield_mean)
   values <- rbind(values, value)
 }
 
-values$s <- factor(values$s, levels=scenarios)
-
+#Getting the percentage increase labels to add in the plot
 ranges <- read.csv('../results/tables/table1_TZA_Ranges.csv') %>% 
-  filter(Scenario %in% c("ZERO", "BK_gain_perc", "OPyield_gain_perc", "OPnetrev_gain_perc")) %>% 
+  filter(Scenario %in% c("ZERO", "BK_gain_perc", "OPyield_mean_gain_perc", "OPnetrev_mean_gain_perc")) %>% 
   dplyr::select(Scenario, yieldMean) %>% 
   mutate(label = paste0(yieldMean, "%"))
 ranges$label[1] <- "0%"
 ranges$s <- factor(scenarios, levels=scenarios)
 
-p <- ggplot(values, aes(x=s, y=yield, fill=s)) + 
+p <- ggplot(values, aes(x=s, y=yield_mean, fill=s)) + 
   geom_boxplot(outlier.size = 1, notch=TRUE) +
   labs(x="Scenario",
        y="Yield (kg/ha)") +
@@ -218,12 +218,10 @@ p <- ggplot(values, aes(x=s, y=yield, fill=s)) +
         panel.grid.major.x = element_blank())
 print(p)
 
-ggsave(filename = paste0('../results/plots/FigureX_yield_boxplot.tif'),
+ggsave(filename = paste0('../results/figures/FigureX_yield_mean_boxplot.tif'),
       plot = p,
       width = 3, height = 3, units = 'in',
       device = 'tiff', dpi = 300)
-
-
 ```
 
 ### Net revenue distribution by scenario
@@ -235,21 +233,19 @@ for (s in scenarios){
   #s <- 'BK'  #to test
   #### \\ Reading pixel result tables  ####
   results <- paste0('../results/tables/TZA_',s,'.csv') %>% read.csv()
-  value <- cbind(s, netrev=results$netrev) %>% as_tibble()
-  value$netrev <- as.numeric(value$netrev)
+  value <- cbind.data.frame(s, netrev_mean=results$netrev_mean) %>% as_tibble()
   values <- rbind(values, value)
 }
 
-values$s <- factor(values$s, levels=scenarios)
-
+#Getting the percentage increase labels to add in the plot
 ranges <- read.csv('../results/tables/table1_TZA_Ranges.csv') %>% 
-  filter(Scenario %in% c("ZERO", "BK_gain_perc", "OPyield_gain_perc", "OPnetrev_gain_perc")) %>% 
+  filter(Scenario %in% c("ZERO", "BK_gain_perc", "OPyield_mean_gain_perc", "OPnetrev_mean_gain_perc")) %>% 
   dplyr::select(Scenario, netrevMean) %>% 
   mutate(label = paste0(netrevMean, "%"))
 ranges$label[1] <- "0%"  #for scenario ZERO
 ranges$s <- factor(scenarios, levels=scenarios)
 
-p <- ggplot(values, aes(x=s, y=netrev, fill=s)) + 
+p <- ggplot(values, aes(x=s, y=netrev_mean, fill=s)) + 
   geom_boxplot(notch=TRUE) +
   labs(x="Scenario",
        y="Net revenue (USD/ha)") +
@@ -261,7 +257,7 @@ p <- ggplot(values, aes(x=s, y=netrev, fill=s)) +
         panel.grid.major.x = element_blank())
 print(p)
 
-ggsave(filename = paste0('../results/plots/FigureX_netrev_boxplot.tif'),
+ggsave(filename = paste0('../results/figures/FigureX_netrev_boxplot.tif'),
       plot = p,
       width = 3, height = 3, units = 'in',
       device = 'tiff', dpi = 300)
