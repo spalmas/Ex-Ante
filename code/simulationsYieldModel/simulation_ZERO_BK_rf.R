@@ -119,6 +119,9 @@ writeRaster(buildraster(BK$avcr, BK, template), filename="results/tif/TZA_BK_avc
 
 #### \\ Writing tables and rasters for analysis and visualization ####
 #This means removing SPAM values from the table and rasters
+data.table::fwrite(ZERO, "results/tables/TZA_ZERO_noMask.csv")
+data.table::fwrite(BK, "results/tables/TZA_BK_noMask.csv")
+
 ZERO <- ZERO[complete.cases(ZERO),]
 BK <- BK[complete.cases(BK),]
 

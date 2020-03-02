@@ -73,6 +73,7 @@ for(season in seasons){
 #### End cluster  ####
 stopCluster(cl)
 
+
 #### \\ Using the mean optimized N_kgha as the best possible value  ####
 OPyield$N_kgha <- OPyield[,paste0("N_kgha_", seasons)] %>% rowMeans(na.rm = TRUE)
 OPyield$totfertcost <- OPyield$N_kgha * OPyield$N_price
@@ -108,15 +109,15 @@ OPyield0$N_kgha[OPyield$N_kgha<0] <- 0  #just in case any OPyield0$N_kgha is neg
 OPyield0$yield <- predict(yield.rf2, OPyield0)
 
 #### \\ Reading ZERO results to calculate changes ####
-ZERO <- read.csv("results/tables/TZA_ZERO.csv")
+ZERO <- read.csv("results/tables/TZA_ZERO_noMask.csv")
 
 #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for OPyield ####
 OPyield <- OPyield %>% 
-  mutate(yield_mean_gain_perc = 100*(yield_mean-ZERO$yield)/ZERO$yield,
+  mutate(yield_mean_gain_perc = 100*(yield_mean-ZERO$yield_mean)/ZERO$yield_mean,
          totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
          netrev_mean_gain_perc = 100*(netrev_mean-ZERO$netrev_mean)/ZERO$netrev_mean,
          ap=ap(yield1=yield_mean, N_kgha1=N_kgha),
-         mp=mp(yield1=yield_mean, yield0=OPyield0$yield, N_kgha1=N_kgha, N_kgha0=OPyield$N_kgha),
+         mp=mp(yield1=yield_mean, yield0=OPyield0$yield, N_kgha1=N_kgha, N_kgha0=OPyield0$N_kgha),
          avcr=avcr(output_price=maize_farmgate_price, ap, input_price=N_price),
          mvcr=mvcr(output_price=maize_farmgate_price, mp, input_price=N_price))
 
@@ -154,8 +155,8 @@ writeRaster(buildraster(OPyield$mvcr, OPyield, template), filename="results/tif/
 
 #### \\ Writing tables and rasters for analysis and visualization ####
 #This means removing SPAM values from the table and rasters
+data.table::fwrite(OPyield, "results/tables/TZA_OPyield_noMask.csv")
 OPyield <- OPyield[complete.cases(OPyield),]
-
 data.table::fwrite(OPyield, "results/tables/TZA_OPyield.csv")
 
 writeRaster(buildraster(OPyield$N_kgha, OPyield, template), filename="results/tif/TZA_OPyield_N_kgha.tif", overwrite=TRUE)

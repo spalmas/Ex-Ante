@@ -111,11 +111,11 @@ OPnetrev0$N_kgha[OPnetrev0$N_kgha<0] <- 0  #just in case any OPnetrev$N_kgha is 
 OPnetrev0$yield <- predict(yield.rf2, OPnetrev0)
 
 #### \\ Reading ZERO results to calculate changes ####
-ZERO <- read.csv("results/tables/TZA_ZERO.csv")
+ZERO <- read.csv("results/tables/TZA_ZERO_noMask.csv")
 
 #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for OPnetrev ####
 OPnetrev <- OPnetrev %>% 
-  mutate(yield_mean_gain_perc = 100*(yield_mean-ZERO$yield)/ZERO$yield,
+  mutate(yield_mean_gain_perc = 100*(yield_mean-ZERO$yield_mean)/ZERO$yield_mean,
          totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
          netrev_mean_gain_perc = 100*(netrev_mean-ZERO$netrev_mean)/ZERO$netrev_mean,
          ap=ap(yield1=yield_mean, N_kgha1=N_kgha),
@@ -156,8 +156,8 @@ writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/ti
 
 #### \\ Writing tables and rasters for analysis and visualization ####
 #This means removing SPAM values from the table and rasters
+data.table::fwrite(OPnetrev, "results/tables/TZA_OPnetrev_noMask.csv")
 OPnetrev <- OPnetrev[complete.cases(OPnetrev),]
-
 data.table::fwrite(OPnetrev, "results/tables/TZA_OPnetrev.csv")
 
 writeRaster(buildraster(OPnetrev$N_kgha, OPnetrev, template), filename="results/tif/TZA_OPnetrev_N_kgha.tif", overwrite=TRUE)
