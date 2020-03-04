@@ -154,13 +154,13 @@ writeRaster(buildraster(OPyield$mvcr, OPyield, template), filename="results/tif/
 
 
 #### \\ Writing tables and rasters for analysis and visualization ####
-#This means removing SPAM values from the table and rasters
+#This means removing non SPAM pixels from the table and rasters
 data.table::fwrite(OPyield, "results/tables/TZA_OPyield_noMask.csv")
-OPyield <- OPyield[complete.cases(OPyield),]
+OPyield <- OPyield[!is.na(OPyield$spam2010V1r1_global_A_MAIZ_A_TZA),]
 data.table::fwrite(OPyield, "results/tables/TZA_OPyield.csv")
 
 writeRaster(buildraster(OPyield$N_kgha, OPyield, template), filename="results/tif/TZA_OPyield_N_kgha.tif", overwrite=TRUE)
-writeRaster(buildraster(OPyield$yield, OPyield, template), filename="results/tif/TZA_OPyield_yield.tif", overwrite=TRUE)
+writeRaster(buildraster(OPyield$yield_mean, OPyield, template), filename="results/tif/TZA_OPyield_yield_mean.tif", overwrite=TRUE)
 writeRaster(buildraster(OPyield$totfertcost, OPyield, template), filename="results/tif/TZA_OPyield_totfertcost.tif", overwrite=TRUE)
 writeRaster(buildraster(OPyield$netrev_mean, OPyield, template), filename="results/tif/TZA_OPyield_netrev_mean.tif", overwrite=TRUE)
 writeRaster(buildraster(OPyield$netrev_sd, OPyield, template), filename="results/tif/TZA_OPyield_netrev_sd.tif", overwrite=TRUE)

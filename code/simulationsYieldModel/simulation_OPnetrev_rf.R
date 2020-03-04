@@ -155,9 +155,9 @@ writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/ti
 
 
 #### \\ Writing tables and rasters for analysis and visualization ####
-#This means removing SPAM values from the table and rasters
+#This means removing non SPAM pixels from the table and rasters
 data.table::fwrite(OPnetrev, "results/tables/TZA_OPnetrev_noMask.csv")
-OPnetrev <- OPnetrev[complete.cases(OPnetrev),]
+OPnetrev <- OPnetrev[!is.na(OPnetrev$spam2010V1r1_global_A_MAIZ_A_TZA),]
 data.table::fwrite(OPnetrev, "results/tables/TZA_OPnetrev.csv")
 
 writeRaster(buildraster(OPnetrev$N_kgha, OPnetrev, template), filename="results/tif/TZA_OPnetrev_N_kgha.tif", overwrite=TRUE)
