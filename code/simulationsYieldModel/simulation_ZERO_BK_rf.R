@@ -22,12 +22,13 @@ rasters_input <- read.table("data/TZA_soilprice_table.txt", header=TRUE, sep=" "
 ########## \\ Getting the names of rainfall seasons to use for results table  ###############
 seasons <- rasters_input %>% dplyr::select(starts_with("rfe")) %>% colnames()
 
-#### \\ Tables for scenario pixel results
+#Table for scenario pixel results
 ZERO <- BK <- rasters_input
 
 ########## \\ ZERO Scenario ###############
-#Nitrogen application
-ZERO$N_kgha <- 0
+#Table for scenario pixel results
+ZERO <- rasters_input
+ZERO$N_kgha <- 0  #Nitrogen application
 ZERO$totfertcost <- ZERO$N_kgha * ZERO$N_price   #this is 0, I have add it for code consistency
 
 #Running yield model for all seasons of rainfall
@@ -46,9 +47,10 @@ ZERO$netrev_cv <- 100*ZERO$netrev_sd/ZERO$netrev_mean
 
 
 ########## \\ BK Blanket Scenario ###############
-#Nitrogen application
-BK$N_kgha <- 100
-BK$totfertcost <- BK$N_kgha * BK$maize_farmgate_price
+#Table for scenario pixel results
+BK <- rasters_input
+BK$N_kgha <- 100  #Nitrogen application
+BK$totfertcost <- BK$N_kgha * BK$N_price #total fertilizer cost
 
 #Running yield model for all seasons of rainfall
 for(season in seasons){
