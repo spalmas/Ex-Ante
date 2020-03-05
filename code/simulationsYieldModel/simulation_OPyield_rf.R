@@ -30,7 +30,7 @@ OPyield <- read.table("data/TZA_soilprice_table.txt", header=TRUE, sep=" ")
 seasons <- OPyield %>% dplyr::select(starts_with("rfe")) %>% colnames()
 
 ########## \\ OPyield OPTIMIZATION ###############
-#pixel <- OPyield[1021,] #to test
+#pixel <- OPyield[1,] #to test
 #Wrapper for the RF forest to be able to use it inside optimizer function
 rf_wrapper <- function(N_kgha, pixel){
   pixel$N_kgha <- N_kgha
@@ -40,9 +40,9 @@ rf_wrapper <- function(N_kgha, pixel){
 
 #optimizer function to use inside apply
 optim_pixel <- function(pixel){
-  solution <- nloptr(x0=300, eval_f = rf_wrapper, lb = 0, ub = 300,
-                     opts =list("algorithm"="NLOPT_LN_BOBYQA",  #also available "NLOPT_LN_COBYLA" or "NLOPT_LN_NELDERMEAD". Probably not big difference. BOBYQA is the fastest and gives same result in this situation.
-                                "xtol_rel"=1.0),  #enough tolerance for this objective
+  solution <- nloptr(x0=100, eval_f = rf_wrapper, lb = 0, ub = 300,
+                     opts =list("algorithm"="NLOPT_LN_NELDERMEAD",  #Methods available "NLOPT_LN_BOBYQA", "NLOPT_LN_COBYLA" or "NLOPT_LN_NELDERMEAD". "NLOPT_LN_BOBYQA" is sensitive to initial value. "NLOPT_LN_NELDERMEAD" gives consistent results
+                                "ftol_rel"=0.1),  #enough tolerance for this objective
                      pixel=pixel)
   return(c(solution$solution, solution$objective))
 }
@@ -76,7 +76,7 @@ stopCluster(cl)
 
 #### \\ Using the mean optimized N_kgha as the best possible value  ####
 OPyield$N_kgha <- OPyield[,paste0("N_kgha_", seasons)] %>% rowMeans(na.rm = TRUE)
-OPyield$totfertcost <- OPyield$N_kgha * OPyield$N_price
+OPyield$totfertcost <- OPyield$N_kgha * OPyield$N_price #total fertilizer cost
 
 
 ########## +++++++ VARIABILITY +++++++ ###############
