@@ -1,0 +1,209 @@
+---
+title: "Market access model"
+#author: "Sebastian Palmas"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+# Market access
+
+*Initial copy from eHandbook script* 
+
+## Transportation cost surface 
+### Elevation and Slope
+
+```{r slope, message=FALSE}
+library(raster)
+tza_alt <- raster("../data/CGIAR-SRTM/srtm_TZA.tif")
+tza_slope <- raster("../data/CGIAR-SRTM/srtm_slope_TZA.tif")
+plot(tza_slope, main="Slope")
+```
+
+We use the slope layer obtained above to create a decay coefficient that governs how much the slope impacts the speed and that we will apply to each grid cell in the cost surface. We use a decay coefficient of 1.5.
+
+```{r}
+decay <- 1.5
+slope_cost <- exp( decay * tan(tza_slope) )
+names(slope_cost) <- "slope_cost"
+```
+
+We will use the slope layer as template for the other rasters that we will create.
+
+
+### Roads
+
+```{r gadm, message=FALSE, warning=FALSE}
+adm <- gadm("TZA", level = 1, path=".")
+```
+
+
+```{r plotRoads}
+library(reagro)
+roads <- reagro_data("tza_roads")
+roads <- project(roads, crs=crs(tza_slope))
+plot(tza_slope)
+lines(roads)
+lines(roads[roads$highway == "secondary", ], lwd=2, col="blue")
+lines(roads[roads$highway == "primary", ], lwd=4, col="red")
+```
+
+#### Road cost surface
+
+The below takes a long time to run. It may also fail because of the relative fraility of the OSM servers (or rather the enourmous number of requests that they get). Road data is in `reagro`.
+
+
+```{r rasterize}
+roadtypes <- c("primary", "secondary", "tertiary")
+i <- match(roads$highway, roadtypes)
+roads$speed <- c(0.001, 0.0015, 0.002)[i]  #speed in the different highways (min/m)
+
+rd_cost <- terra::rasterize(roads, tza_slope,
+                            values="speed",
+                            filename="../results/tif/road_cost.tif",
+                            overwrite=TRUE,
+                            wopt=list(names="road_cost"))
+
+#rd_cost <- rast("../results/tif/rdcost.tif")
+
+#I think the rasterize function is not working properly for terra right now. I'll reclassify manually.
+#first i need the reclassify matrix
+road_speeds <- cbind(roads=c(1,2,3), speeds = c(0.001, 0.0015, 0.002))
+
+rd_cost <- classify(rd_cost,
+                    rcl = road_speeds,
+                    filename="../results/tif/road_cost.tif",
+                    overwrite=TRUE,)
+
+plot(rd_cost, main="Travel cost (min/m)")
+```
+
+
+### Land Cover
+Environmental factors generally contribute to travel speeds off the transport network, such as land cover. Different types of land cover have different travel speeds depending on their "friction" or their easeness of movement. For example, overland (on foot) movement through a closed forest is slower than movement through croplands or bare areas. S
+
+In this example, we will use the GLOBCOVER 2009 Version 2.3 land cover classification for Tanzania. More information about this classification can be gound in the [ESA GlobCover portal](http://due.esrin.esa.int/page_globcover.php). We included these data the reagro package.
+
+```{r}
+tza_lc <- reagro_data("TZA_globcover")
+plot(tza_lc, main = "GLOBCOVER 2009 v2.3 land classes")
+lines(adm)
+```
+
+As mentioned above, creating a travel cost surface depending on land cover requires an associated travel cost for each land class. urveys, such as the one the Weiss et al., (2018) paper can be performed to obtain estimates of how long it takes individuals to traverse each land cover type. For now, we assign some travel cost values to the different land cover classes in Tanzania.
+
+```{r, echo = FALSE}
+library(knitr)
+text_tbl <- data.frame(
+  Value = c(40,50,70,160,170,190,200,210,220),
+  LandClass = c("Closed to open (>15%) broadleaved evergreen or semi-deciduous forest (>5m)",
+                "Closed (>40%) broadleaved deciduous forest (>5m)",
+                "Closed (>40%) needleleaved evergreen forest (>5m)",
+                "Closed to open (>15%) broadleaved forest regularly flooded (semi-permanently or temporarily) - Fresh or brackish water",
+                "Closed (>40%) broadleaved forest or shrubland permanently flooded - Saline or brackish water",
+                "Artificial surfaces and associated areas (Urban areas >50%)",
+                "Bare areas",
+                "Water bodies",
+                "Permanent snow and ice"),
+  TravelCost=c(0.04, 0.04, 0.04, 0.03, 0.05, 0.01, 0.01, 0.11, 0.13)
+)
+
+kable(text_tbl)
+```
+
+```{r}
+rc <- data.frame(from=as.vector(unique(tza_lc)), to=0.02)
+rc$from[rc$from %in% c(190,200)] <- 0.01
+rc$from[rc$from == 160] <- 0.03
+rc$from[rc$from %in% c(40,50,70)] <- 0.04
+rc$from[rc$from == 170] <- 0.05
+rc$from[rc$from == 210] <- 0.11
+rc$from[rc$from == 220] <- 0.13
+
+#reclassifying
+tza_lc_cost <- classify(tza_lc, rc) 
+```
+
+
+```{r}
+lcfname <- "../results/tif/lc_cost.tif"
+lc_cost <- warp(tza_lc_cost, tza_slope, filename=lcfname, wopt=list(names="lc_cost"), overwrite=TRUE)
+```
+
+
+```{r}
+plot(lc_cost, main = "Travel costs (min/m) depending on land cover class")
+```
+
+
+### Combining all travel costs
+
+Now that we have all travel cost surfaces what we will use, we then need to combine them into a single travel cost layer that keeps only the minimum cost associated of moving though each grid cell. In this case, we combine the three cost layers in a SpatRaster object and apply the `min` function to obtain the minimum value in each grid cell.
+
+```{r}
+# Combine the cost layers
+all_cost <- c(rd_cost, lc_cost)
+
+#getting the minimum value of each grid cell
+cost <- min(all_cost, na.rm=TRUE)*slope_cost
+
+writeRaster(cost, filename = "../results/tif/cost.tif", overwrite=TRUE)
+
+plot(cost, main="Final cost layer (min/m)")
+```
+
+
+## Market access
+
+With the cost surface, we can compute market access by calculating the accumulated least cost surface from market locations. In other words, each pixel will have an associated cost of getting to a market center.
+
+Distances within a raster can be computed with the [gdistance](https://cran.r-project.org/web/packages/gdistance/index.html) R package using the  `accCost` function.
+
+When using least cost path analysis, the eight neighbors of a raster pixel are evaluated and the generated path moves to the cells with the smallest accumulated or cost value. This process is repeated multiple times until the source and destination are connected
+
+Now with the location of the cities, we can calculate the access cost using `accCost` function in the `gdistance` package.
+
+We first need to create a transition object from the cost rasters using the `transition` function. We read the cost layer produced above usign `raster::raster` because the transition function requires a `RasterLayer` object.
+
+The transition object represent the weights given to each connection between pixels (nodes). In `gdistance`, the transition matrix is expected to have conductance values. The conductance
+
+```{r}
+# Combine the cost layers
+library(gdistance)
+
+cost <- raster("../results/tif/cost.tif")  #min/m
+
+#converting to conductance values with correct units
+conductance <- 1/cost
+
+#Creating a transition object 
+trans <- transition(conductance,transitionFunction=mean, directions= 8)
+```
+Because the transition layer is based on a lon-lat projection and covers a large area, it requires geocorrection for map distortion as well as for diagonal connections between grid cells.
+```{r}
+trans <- geoCorrection(trans, type="c")
+```
+
+With the transition object, we can now calculate access using the `accCost` function and supplying the coordinates from which to calulate.  
+
+In this code below, we make create a spatialpoint object with locations cities (>50000 population) in Tanzania.
+
+```{r}
+#lat=c(-6.17, -6.81, -5.02, -2.51, -3.65, -8.90, -3.34, -3.36, -10.67)
+#lon=c(35.74, 37.66, 32.80, 32.90, 33.42, 33.46, 37.34, 36.68, 35.64)
+cities <- vect("F:/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_slope)) %>% as.data.frame()
+
+#keep only large cities
+cities <- cities %>% dplyr::filter(POP_MAX>=50000)
+
+#convert to spatial points needed in gdistance
+cities <- SpatialPoints(cbind(cities$LONGITUDE, cities$LATITUDE))
+
+#Estimating access of each pixel to the nearest 50k city
+A <- accCost(trans, fromCoords=cities)
+
+writeRaster(A, filename = "../results/tif/accCost50k.tif", overwrite=TRUE)
+
+plot(A, main="Access to markets (cities > 50k) in Tanzania (min)")
+points(cities)
+
+```

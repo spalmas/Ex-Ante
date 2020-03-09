@@ -1,0 +1,23 @@
+---
+title: "Fertilizer price modeol"
+#author: "Sebastian Palmas"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+```
+
+# Packages
+```{r, message=FALSE}
+library(terra)
+library(tidyverse)
+```
+
+# Data
+## ACcess to cities of 50k or more
+```{r}
+acc50k <- rast()
+```
+
