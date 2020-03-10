@@ -97,9 +97,10 @@ gdalwarp -t_srs EPSG:102022 -tr 5000 5000 -r bilinear -cutline GADM/gadm36_level
 gdal_merge.py -o CGIAR-SRTM/srtm_TZA_merged.tif -of GTiff CGIAR-SRTM/srtm_42_13/srtm_42_13.tif CGIAR-SRTM/srtm_42_14/srtm_42_14.tif CGIAR-SRTM/srtm_43_13/srtm_43_13.tif CGIAR-SRTM/srtm_43_14/srtm_43_14.tif CGIAR-SRTM/srtm_43_15/srtm_43_15.tif CGIAR-SRTM/srtm_44_13/srtm_44_13.tif CGIAR-SRTM/srtm_44_14/srtm_44_14.tif CGIAR-SRTM/srtm_44_15/srtm_44_15.tif
 
 #crop the merged raster to boundaries of Tanzania and change resolution to match 
-gdalwarp  -t_srs EPSG:102022 -tr 5000 5000 -r bilinear -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite CGIAR-SRTM/srtm_TZA_merged.tif Ex-Ante/data/CGIAR-SRTM/srtm_TZA.tif
-#Create slope
-gdaldem slope Ex-Ante/data/CGIAR-SRTM/srtm_TZA.tif Ex-Ante/data/CGIAR-SRTM/srtm_slope_TZA.tif -of GTiff -co compress=lzw
+#I assign the nodata value of the source to 0 to avoid slope calculations outside the area of Tanzania
+gdalwarp  -t_srs EPSG:102022 -tr 5000 5000 -srcnodata 0 -r bilinear -cutline GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_0.shp -crop_to_cutline -of GTiff -co compress=lzw -overwrite CGIAR-SRTM/srtm_TZA_merged.tif Ex-Ante/data/CGIAR-SRTM/srtm_TZA.tif
+#Create slope (percent to convert later to radians used in tan function)
+gdaldem slope Ex-Ante/data/CGIAR-SRTM/srtm_TZA.tif Ex-Ante/data/CGIAR-SRTM/srtm_slope_TZA.tif -p -of GTiff -co compress=lzw
 
 
 ######################################
