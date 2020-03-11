@@ -45,8 +45,8 @@ rasters_input <- cbind(rasters_input,
 
 #### N AND MAIZE PRICES ####
 # I will use a constant N_price for now. $1 USD/kg of N
-N_price <- rep(1, nrow(rasters_input))
-rasters_input <- cbind(rasters_input, N_price)
+N_price <- rast("data/prices/TZA_N_price.tif")
+rasters_input <- cbind(rasters_input, values(N_price))
 
 maize_farmgate_price <- rast("data/prices/maize_farmgate_price/TZ_maipkghat_fgprice.tif") / 1598 #to convert from Tsh/kg to USD/kg 2013 prices
 maize_farmgate_price <- warp(maize_farmgate_price, srtm_TZA)

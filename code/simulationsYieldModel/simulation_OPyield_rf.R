@@ -141,7 +141,7 @@ OPyield <- OPyield %>% dplyr::select(index, gadm36_TZA_1, spam2010V1r1_global_A_
 #### \\ Writing rasters with no SPAM mask ####
 template <- rast("data/CGIAR-SRTM/srtm_slope_TZA.tif")
 writeRaster(buildraster(OPyield$N_kgha, OPyield, template), filename="results/tif/TZA_OPyield_N_kgha_noMask.tif", overwrite=TRUE)
-writeRaster(buildraster(OPyield$yield, OPyield, template), filename="results/tif/TZA_OPyield_yield_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPyield$yield_mean, OPyield, template), filename="results/tif/TZA_OPyield_yield_mean_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPyield$totfertcost, OPyield, template), filename="results/tif/TZA_OPyield_totfertcost_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPyield$netrev_mean, OPyield, template), filename="results/tif/TZA_OPyield_netrev_mean_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPyield$netrev_sd, OPyield, template), filename="results/tif/TZA_OPyield_netrev_sd_noMask.tif", overwrite=TRUE)

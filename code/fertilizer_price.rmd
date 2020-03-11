@@ -15,9 +15,60 @@ library(terra)
 library(tidyverse)
 ```
 
-# Data
-## ACcess to cities of 50k or more
+## Cities
 ```{r}
-acc50k <- rast()
+tza_alt <- rast("../data/CGIAR-SRTM/srtm_TZA.tif")
+cities <- vect("/media/sp/SPHD/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_alt))
+
+#getting the projected coordinates and the populatoin
+cities <- cbind(x=geom(cities)$x, y=geom(cities)$y, POP_MAX=cities$POP_MAX) %>% as.data.frame()
+
+#keep only large cities
+cities <- cities %>% dplyr::filter(POP_MAX>=50000)
+
+#convert to spatial points needed in gdistance
+cities <- sp::SpatialPoints(cbind(cities$x, cities$y))
+
+```
+
+
+## Access to cities of 50k or more
+```{r}
+acc50k <- rast("../results/tif/accCost50k.tif")
+plot(acc50k, main="Access to large cities")
+points(cities)
+
+```
+```{r}
+hist(values(acc50k))
+```
+
+##Correcting factor
+Logit transformation
+```{r}
+logistic <- function(x){
+  #z <- 0 #to test
+  L <- 2  #maximum value of curve #in this case, values above 1
+  k <- .03   #logistic growth steepness of the curve
+  x0 <- 180   #sigmoid midpoint
+  #transformation
+  z <- L/(1+exp(-k*(x-x0))) 
+  z <- z+1   #to convert to multiplier 
+  return(z)
+}
+
+x <- seq(0,400, 10)
+y <- logistic(x)
+plot(x,y, xlab="Access time to city 50k (min)", ylab="Price multiplier")
+```
+
+## Correction
+```{r}
+#constant price
+N_price_average <- 0.95   #USD/kg
+N_price <- N_price_average*logistic(acc50k)
+names(N_price) <- "N_price"
+writeRaster(N_price, filename="../data/prices/TZA_N_price.tif", overwrite=TRUE)
+plot(N_price, main="N price (USD/kg)")
 ```
 
