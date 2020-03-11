@@ -7,16 +7,22 @@ output: pdf_document
 
 # Market access
 
-*Initial copy from eHandbook script* 
+*Modified from eHandbook script in reagro* 
 
 ## Transportation cost surface 
 ### Elevation and Slope
 
 ```{r slope, message=FALSE}
-library(raster)
-tza_alt <- raster("../data/CGIAR-SRTM/srtm_TZA.tif")
-tza_slope <- raster("../data/CGIAR-SRTM/srtm_slope_TZA.tif")
-plot(tza_slope, main="Slope")
+library(terra)
+tza_alt <- rast("../data/CGIAR-SRTM/srtm_TZA.tif")
+tza_slope <- rast("../data/CGIAR-SRTM/srtm_slope_TZA.tif")
+tza_slope <- 2*pi*tza_slope/100#convert from percentage to radian
+plot(tza_slope, main="Slope (radians)")
+```
+
+```{r gadm, message=FALSE, warning=FALSE}
+adm <- vect("../data/admin/gadm36_TZA_0.shp")
+adm <- project(adm, crs=crs(tza_alt))
 ```
 
 We use the slope layer obtained above to create a decay coefficient that governs how much the slope impacts the speed and that we will apply to each grid cell in the cost surface. We use a decay coefficient of 1.5.
@@ -25,6 +31,7 @@ We use the slope layer obtained above to create a decay coefficient that governs
 decay <- 1.5
 slope_cost <- exp( decay * tan(tza_slope) )
 names(slope_cost) <- "slope_cost"
+plot(slope_cost, main="Slope cost")
 ```
 
 We will use the slope layer as template for the other rasters that we will create.
@@ -32,14 +39,9 @@ We will use the slope layer as template for the other rasters that we will creat
 
 ### Roads
 
-```{r gadm, message=FALSE, warning=FALSE}
-adm <- gadm("TZA", level = 1, path=".")
-```
-
 
 ```{r plotRoads}
-library(reagro)
-roads <- reagro_data("tza_roads")
+roads <- reagrodata::reagro_data("tza_roads")
 roads <- project(roads, crs=crs(tza_slope))
 plot(tza_slope)
 lines(roads)
@@ -67,29 +69,27 @@ rd_cost <- terra::rasterize(roads, tza_slope,
 
 #I think the rasterize function is not working properly for terra right now. I'll reclassify manually.
 #first i need the reclassify matrix
+
 road_speeds <- cbind(roads=c(1,2,3), speeds = c(0.001, 0.0015, 0.002))
 
-rd_cost <- classify(rd_cost,
-                    rcl = road_speeds,
-                    filename="../results/tif/road_cost.tif",
-                    overwrite=TRUE,)
+rd_cost2 <- classify(x=rd_cost,
+                     rcl = road_speeds,
+                     filename="../results/tif/road_cost2.tif",
+                     overwrite=TRUE)
 
-plot(rd_cost, main="Travel cost (min/m)")
+plot(rd_cost2, main="Travel cost (min/m)")
 ```
 
 
 ### Land Cover
-Environmental factors generally contribute to travel speeds off the transport network, such as land cover. Different types of land cover have different travel speeds depending on their "friction" or their easeness of movement. For example, overland (on foot) movement through a closed forest is slower than movement through croplands or bare areas. S
-
-In this example, we will use the GLOBCOVER 2009 Version 2.3 land cover classification for Tanzania. More information about this classification can be gound in the [ESA GlobCover portal](http://due.esrin.esa.int/page_globcover.php). We included these data the reagro package.
 
 ```{r}
-tza_lc <- reagro_data("TZA_globcover")
+tza_lc <- reagrodata::reagro_data("TZA_globcover")
 plot(tza_lc, main = "GLOBCOVER 2009 v2.3 land classes")
 lines(adm)
 ```
 
-As mentioned above, creating a travel cost surface depending on land cover requires an associated travel cost for each land class. urveys, such as the one the Weiss et al., (2018) paper can be performed to obtain estimates of how long it takes individuals to traverse each land cover type. For now, we assign some travel cost values to the different land cover classes in Tanzania.
+As mentioned above, creating a travel cost surface depending on land cover requires an associated travel cost for each land class. urveys, such as the one the Weiss et al., (2018) paper can be performed to obtain estimates of how long it takes (min/m) individuals to traverse each land cover type. For now, we assign some travel cost values to the different land cover classes in Tanzania.
 
 ```{r, echo = FALSE}
 library(knitr)
@@ -104,33 +104,35 @@ text_tbl <- data.frame(
                 "Bare areas",
                 "Water bodies",
                 "Permanent snow and ice"),
-  TravelCost=c(0.04, 0.04, 0.04, 0.03, 0.05, 0.01, 0.01, 0.11, 0.13)
+  travel_speeds=c(0.04, 0.04, 0.04, 0.03, 0.05, 0.01, 0.01, 0.11, 0.13)
 )
 
 kable(text_tbl)
 ```
 
+We need to reclassify the values and assign speeds in each land class.
+
 ```{r}
 rc <- data.frame(from=as.vector(unique(tza_lc)), to=0.02)
-rc$from[rc$from %in% c(190,200)] <- 0.01
-rc$from[rc$from == 160] <- 0.03
-rc$from[rc$from %in% c(40,50,70)] <- 0.04
-rc$from[rc$from == 170] <- 0.05
-rc$from[rc$from == 210] <- 0.11
-rc$from[rc$from == 220] <- 0.13
+rc$to[rc$from %in% c(190,200)] <- 0.01
+rc$to[rc$from == 160] <- 0.03
+rc$to[rc$from %in% c(40,50,70)] <- 0.04
+rc$to[rc$from == 170] <- 0.05
+rc$to[rc$from == 210] <- 0.11
+rc$to[rc$from == 220] <- 0.13
 
 #reclassifying
 tza_lc_cost <- classify(tza_lc, rc) 
 ```
 
+We need to warp to match the other layers.
 
 ```{r}
-lcfname <- "../results/tif/lc_cost.tif"
-lc_cost <- warp(tza_lc_cost, tza_slope, filename=lcfname, wopt=list(names="lc_cost"), overwrite=TRUE)
-```
-
-
-```{r}
+lc_cost <- warp(tza_lc_cost, tza_slope,
+                method="ngb",
+                filename="../results/tif/lc_cost.tif",
+                overwrite=TRUE,
+                wopt=list(names="lc_cost"))
 plot(lc_cost, main = "Travel costs (min/m) depending on land cover class")
 ```
 
@@ -141,14 +143,16 @@ Now that we have all travel cost surfaces what we will use, we then need to comb
 
 ```{r}
 # Combine the cost layers
-all_cost <- c(rd_cost, lc_cost)
+all_cost <- c(rd_cost2, lc_cost)
 
 #getting the minimum value of each grid cell
 cost <- min(all_cost, na.rm=TRUE)*slope_cost
 
 writeRaster(cost, filename = "../results/tif/cost.tif", overwrite=TRUE)
 
-plot(cost, main="Final cost layer (min/m)")
+#areas near mountains have very high slope resulting in really high costs. I added a zlim value for better representation
+
+plot(cost, main="Final cost layer (min/m)", zlim=c(0,0.2))
 ```
 
 
@@ -188,22 +192,27 @@ With the transition object, we can now calculate access using the `accCost` func
 In this code below, we make create a spatialpoint object with locations cities (>50000 population) in Tanzania.
 
 ```{r}
-#lat=c(-6.17, -6.81, -5.02, -2.51, -3.65, -8.90, -3.34, -3.36, -10.67)
-#lon=c(35.74, 37.66, 32.80, 32.90, 33.42, 33.46, 37.34, 36.68, 35.64)
-cities <- vect("F:/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_slope)) %>% as.data.frame()
+#cities <- vect("F:/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_slope)) %>% as.data.frame()
+
+cities <- vect("/media/sp/SPHD/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_alt))
+geom(cities)
+
+#getting the projected coordinates and the populatoin
+cities <- cbind(x=geom(cities)$x, y=geom(cities)$y, POP_MAX=cities$POP_MAX) %>% as.data.frame()
 
 #keep only large cities
 cities <- cities %>% dplyr::filter(POP_MAX>=50000)
 
 #convert to spatial points needed in gdistance
-cities <- SpatialPoints(cbind(cities$LONGITUDE, cities$LATITUDE))
+cities <- SpatialPoints(cbind(cities$x, cities$y))
 
 #Estimating access of each pixel to the nearest 50k city
-A <- accCost(trans, fromCoords=cities)
+A <- accCost(trans, fromCoords=cities) 
 
 writeRaster(A, filename = "../results/tif/accCost50k.tif", overwrite=TRUE)
 
-plot(A, main="Access to markets (cities > 50k) in Tanzania (min)")
+plot(A, zlim=c(0,4000),
+     main="Access to markets (cities > 50k) in Tanzania (min)")
 points(cities)
 
 ```
