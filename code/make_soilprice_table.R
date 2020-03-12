@@ -74,26 +74,12 @@ for (rainfall_raster in rainfall_rasters){
 rasters_input <- rasters_input[complete.cases(rasters_input[, colnames(rasters_input) != "spam2010V1r1_global_A_MAIZ_A_TZA"]),]
 
 #### ADDING CONSTANT SOCIOECONOMIC VARIABLES FOUND IN TZAPS
-rasters_input <- cbind(
-  rasters_input,
-  year           = 2.016310e+03,
-  intercrop      = 5.643225e-01,
-  rotat1         = 6.346484e-02,
-  manure         = 1.972556e-01,
-  cropres        = 9.262436e-02,
-  weedings       = 1.826758e+00,
-  impseed        = 1.355060e-01,
-  disease        = 1.320755e-01,
-  striga         = 3.430532e-02,
-  fallow3yr      = 4.116638e-02,
-  struct         = 2.521441e-01,
-  terraced       = 3.430532e-02,
-  logha          = -5.170819e-01,
-  headage        = 4.777208e+01,
-  femhead        = 1.360424e-01,
-  hhsize         = 5.655232e+00,
-  headeduc       = 7.051237e+00
-)
+#the table of summary statistics is calculated in yield_response_fit.rmd
+hh_summary_stats <- read_csv("results/tables/hh_summary_stats.csv") 
+hh_summary_stats_columns <- hh_summary_stats %>% dplyr::select(mean) %>% t() %>% data.frame()
+colnames(hh_summary_stats_columns) <- hh_summary_stats$variable
+
+rasters_input <- cbind(rasters_input, hh_summary_stats_columns)
 
 #### PRINTING TO CHECK ####
 head(rasters_input)

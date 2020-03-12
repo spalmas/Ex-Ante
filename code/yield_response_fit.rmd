@@ -1,7 +1,7 @@
 ---
 title: "Random Forest Prediction of yield response"
 #author: "Sebastian Palmas"
-#date: "2020/01/31"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 ---
 
@@ -282,22 +282,16 @@ save(yield.rf2, file="../results/models/yield.rf2.rda")
 
 # Mean values of household variables
 Because we don't have spatial surfaces of the household variables, we will use the mean values of these variables in the TZAPS as constants in the spatial predictions. This code below finds the mean values of the household characteristics found in the TZAPS.
+
+The exported table will be used to fill the values in the simulations.
 ```{r}
-TZAPS %>% summarise(year = mean(year, na.rm=TRUE),
-                    intercrop = mean(intercrop, na.rm=TRUE),
-                    rotat1 = mean(rotat1, na.rm=TRUE),
-                    manure = mean(manure, na.rm=TRUE),
-                    cropres = mean(cropres, na.rm=TRUE),
-                    weedings = mean(weedings, na.rm=TRUE),
-                    impseed = mean(impseed, na.rm=TRUE),
-                    disease = mean(disease, na.rm=TRUE),
-                    striga = mean(striga, na.rm=TRUE),
-                    fallow3yr = mean(fallow3yr, na.rm=TRUE),
-                    struct = mean(struct, na.rm=TRUE),
-                    terraced = mean(terraced, na.rm=TRUE),
-                    logha = mean(logha, na.rm=TRUE),
-                    headage = mean(headage, na.rm=TRUE),
-                    femhead = mean(femhead, na.rm=TRUE),
-                    hhsize = mean(hhsize, na.rm=TRUE),
-                    headeduc = mean(headeduc, na.rm=TRUE)) %>% t()
+hh_summary_stats <- TZAPS_subset %>% 
+  dplyr::select(intercrop, rotat1, manure, cropres, weedings, impseed, fallow3yr, struct, terraced, logha, headage, hhsize, headeduc, year) %>%
+  sapply(FUN = function(cl) c(mean=mean(cl,na.rm=TRUE), 
+                              sd=sd(cl,na.rm=TRUE))) %>% 
+  t() %>% data.frame() %>% rownames_to_column("variable")
+
+hh_summary_stats
+write.table(hh_summary_stats,file="../results/tables/hh_summary_stats.csv", sep=",", row.names = FALSE)
+
 ```
