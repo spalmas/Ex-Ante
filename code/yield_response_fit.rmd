@@ -293,5 +293,6 @@ hh_summary_stats <- TZAPS_subset %>%
 
 hh_summary_stats
 write.table(hh_summary_stats,file="../results/tables/hh_summary_stats.csv", sep=",", row.names = FALSE)
+print(paste0("Number of observations: ", nrow(TZAPS_subset)))
 
 ```
