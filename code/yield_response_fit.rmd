@@ -18,8 +18,8 @@ library(tidyverse)
 This is the TZAPS yield measurements from 2016 and 2017 added with many layers of information from ISRIC, markus stacks, access from Jordan, CHIRPS season data (from 2016 and 2017), CGIAR-srtm data.
 This file was prepared in the *TZAPS_hhid_coords_extract.R* code.
 ```{r, message=FALSE}
-#TZAPS <- read_csv("F:/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>% 
-TZAPS <- read_csv("/media/sp/SPHD/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>%    #if working in linux
+TZAPS <- read_csv("F:/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>% 
+#TZAPS <- read_csv("/media/sp/SPHD/Work/TAMASA/APS/TZAPS_hhid_coords_stacks.csv") %>%    #if working in linux
   filter(!is.na(yld)) %>%    #remove plots without yield data
   filter(yld > 100) %>%     #outliers?
   filter(TAMSAT_seas_rainfall > 300) %>%   # Deleting places where seasonal rainfall is too low
@@ -204,6 +204,7 @@ TZAPS_subset <- TZAPS %>% dplyr::select(yld, N_kgha, intercrop, rotat1, manure,
 
 ### Tune The Forest
 ```{r}
+set.seed(1234)
 trf <- tuneRF(x=TZAPS_subset[,2:ncol(TZAPS_subset)], # Prediction variables
               y=TZAPS_subset$yld) # Response variable
 ```
@@ -218,8 +219,8 @@ trf <- tuneRF(x=TZAPS_subset[,2:ncol(TZAPS_subset)], # Prediction variables
 We create a model with the `randomForest` function which takes as arguments: the response variable the prediction variables and the optimal number of variables to consider at each split (estimated above). We also get the function to rank the prediction variables based on how much influence they have in the decision-trees' results.
 ```{r}
 yield.rf2 <- randomForest(yld~., TZAPS_subset,
-                         mtry=mintree, # Number of variables in subset at each split
-                         importance = TRUE) # Assess importance of predictors.
+                          mtry=mintree, # Number of variables in subset at each split
+                          importance = TRUE) # Assess importance of predictors.
 yield.rf2
 ```
 
@@ -236,31 +237,9 @@ We can have a look at each variable's influence by plotting their importance bas
 ```{r,fig.width=10, fig.height=6}
 varImpPlot(yield.rf2)
 ```
-
-### Prediction Evaluation
-To assess the predictions, we will compare the observed maize yields (the training data) with the predicted maize yields (predicted using the training data). Considering that the training data, is in point form as opposed to raster, we will make a non-spatial prediction using the predict function in the "stats" package. We plot the observed and predicted values to see the trend. 
-```{r, echo=FALSE}
-pred <- stats::predict(yield.rf2)
-
-rsq <- function (obs, pred) cor(obs, pred, use = 'complete.obs') ^ 2
-RMSE <- function(obs, pred){sqrt(mean((pred - obs)^2, na.rm = TRUE))}
-plot_fitness <- function(obs, pred, name){
-  r2 <- rsq(obs, pred) %>% round(digits = 3)
-  rmse <- RMSE(obs, pred) %>% round(digits = 3)
-  
-  plot(x = obs, pred,
-       main = paste0(name, ". Quick r2 = ", r2, ". RMSE = ", rmse))
-  abline(a=0, b=1)
-}
-
-plot_fitness(obs = TZAPS_subset$yld,
-             pred = pred,
-             "Fitness")
-```
-
 ### Partial dependence plots
 
-Partial dependence plots of the 10 most important variables
+Partial dependence plots of the 10 most important variables.
 
 ```{r}
 library(caret)
@@ -273,6 +252,64 @@ for (i in seq_along(impvar)) {
 }
 par(op)
 ```
+
+
+In here we also build the partial dependence plots that will be used in the paper.
+```{r}
+library(ggpubr)   # for theme and ggarrange package
+theme_set(theme_pubr())
+
+
+seas_rainfall_partial <- partialPlot(x=yield.rf2, pred.data = as.data.frame(TZAPS_subset),
+                                     x.var = "seas_rainfall", plot=FALSE) %>% data.frame()
+N_kgha_partial <- partialPlot(x=yield.rf2, pred.data = as.data.frame(TZAPS_subset),
+                              x.var = "N_kgha", plot=FALSE) %>% data.frame()
+ORCDRC_partial <- partialPlot(x=yield.rf2, pred.data = as.data.frame(TZAPS_subset),
+                              x.var = "af_ORCDRC_T__M_sd1_5000m_TZA", plot=FALSE) %>% data.frame()
+
+seas_rainfall_plot <- ggplot(seas_rainfall_partial, aes(x,y)) +
+  geom_line() +
+  labs(x = "Seasonal rainfall (mm)", y = "Partial yield (kg/ha)")
+N_kgha_plot <- ggplot(N_kgha_partial, aes(x,y)) +
+  geom_line() +
+  labs(x = "Nitrogen (kg/ha)", y = "Partial yield (kg/ha)")
+ORCDRC_plot <- ggplot(ORCDRC_partial, aes(x,y)) +
+  geom_line() +
+  labs(x = "Soil Organic carbon (g/kg)", y = "Partial yield (kg/ha)")
+```
+
+
+### Prediction Evaluation
+To assess the predictions, we will compare the observed maize yields (the training data) with the predicted maize yields (predicted using the training data). Considering that the training data, is in point form as opposed to raster, we will make a non-spatial prediction using the predict function in the "stats" package. We plot the observed and predicted values to see the trend. 
+```{r, echo=FALSE, fig.length = 4, fig.width = 4}
+TZAPS_subset$pred <- stats::predict(yield.rf2)
+
+rsq <- function (obs, pred) cor(obs, pred, use = 'complete.obs') ^ 2
+RMSE <- function(obs, pred){sqrt(mean((pred - obs)^2, na.rm = TRUE))}
+
+fr2_rsq <- rsq(TZAPS_subset$yld, TZAPS_subset$pred) %>% round(digits = 2)
+fr2_rmse <- RMSE(TZAPS_subset$yld, TZAPS_subset$pred) %>% round(digits = 0)
+
+yield_fit_plot <- ggplot(data = TZAPS_subset, aes(x = yld, y = pred)) +
+  geom_point(alpha=0.2) +
+  geom_abline(slope = 1, alpha=0.3) +
+  annotate('text', x = 2000, y = 7500, label = paste0("R^{2}==", fr2_rsq), parse = TRUE, size=3)  +
+  annotate('text', x = 2000, y = 6500, label = paste0("RMSE==", fr2_rmse), parse = TRUE, size=3)  +
+  labs(x = "Observed yield (kg/ha)", y = "Predicted yield (kg/ha)") +
+  xlim(0, 9000) + ylim(0, 9000)
+```
+
+### Building the figure with the 4 plots
+```{r}
+figure2 <- ggarrange(seas_rainfall_plot, N_kgha_plot, ORCDRC_plot, yield_fit_plot,
+                     labels=c("A", "B", "C", "D"),
+                     ncol=2, nrow=2)
+figure2
+ggsave(filename = "D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/figures/Figure3_yieldfit.tif",
+       plot = figure2,
+       width = 15, height = 15, units = "cm", device = "tiff")
+```
+
 
 We can save the model to a file and then load it with `readRDS` to use it with another set of predictors.
 ```{r}
