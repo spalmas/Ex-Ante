@@ -16,6 +16,11 @@ ap <- function(yield1, N_kgha1){
   yield1/N_kgha1
 }
 
+#Nitrogen use efficiency
+nue <- function(yield1, yield0, N_kgha1){
+  100*(yield1-yield0)/N_kgha1
+}
+
 #Marginal product
 #In ex-ante, the increments of input are in unit of 1, then the DeltaY is just Y1-Y0, but I leave the complete formula just in case is used for other unit increments
 mp <- function(yield1, yield0, N_kgha1, N_kgha0){

@@ -20,7 +20,7 @@ rainfall_sd <- sqrt(sum((rainfall - mean(rainfall))^2)/(nlyr(rainfall) - 1))
 rainfall_cv <- 100*rainfall_sd / mean(rainfall)
 
 #### +++++++ EXPORTING RASTER +++++++ ####
-writeRaster(rainfall_cv, filename = 'data/rainfall/rfe12-05.v3_CV_TZA.tif', overwrite=TRUE)
+writeRaster(rainfall_cv, filename = 'data/rainfall/rfeDEC-MAY.v3_CV_TZA.tif', overwrite=TRUE)
 
 #### +++++++ PLOTTING RASTER +++++++ ####
 plot(rainfall_cv, main="Rainfall CV")

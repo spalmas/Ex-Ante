@@ -66,7 +66,6 @@ BK$netrev_mean <- BK[,paste0("netrev_", seasons)] %>% rowMeans(na.rm = TRUE)
 BK$netrev_sd <- apply(BK[,paste0("netrev_", seasons)], 1, sd, na.rm=TRUE)
 BK$netrev_cv <- 100*BK$netrev_sd/BK$netrev_mean
 
-
 #### \\ Calculating Yield0 for mvcr  ####
 #Getting amount of fertilizer with one unit less using the mean optimized N_kgha
 #we are using a different table to avoid erasing values in original table that will later be exported
@@ -82,6 +81,7 @@ BK <- BK %>%
          totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
          netrev_mean_gain_perc = 100*(netrev_mean-ZERO$netrev_mean)/ZERO$netrev_mean,
          ap = ap(yield1=yield_mean, N_kgha1=N_kgha),
+         nue = nue(yield1=yield_mean, yield0=ZERO$yield_mean, N_kgha1=N_kgha),
          mp = mp(yield1=yield_mean, yield0=BK0$yield, N_kgha1=N_kgha, N_kgha0=BK0$N_kgha),
          avcr = avcr(output_price=maize_farmgate_price, ap, input_price=N_price),
          mvcr = mvcr(output_price=maize_farmgate_price, mp, input_price=N_price)
@@ -95,7 +95,7 @@ ZERO <- ZERO %>% select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
 BK <- BK %>% select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
                     N_kgha,
                     yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
-                    yield_mean_gain_perc, totfertcost_gain_perc, netrev_mean_gain_perc, ap, mp, avcr, mvcr)
+                    yield_mean_gain_perc, totfertcost_gain_perc, netrev_mean_gain_perc, ap, nue, mp, avcr, mvcr)
 
 
 #### \\ Writing rasters with no SPAM mask ####
@@ -115,6 +115,7 @@ writeRaster(buildraster(BK$netrev_cv, BK, template), filename="results/tif/TZA_B
 writeRaster(buildraster(BK$yield_mean_gain_perc, BK, template), filename="results/tif/TZA_BK_yield_mean_gain_perc_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$totfertcost_gain_perc, BK, template), filename="results/tif/TZA_BK_totfertcost_gain_perc_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$netrev_mean_gain_perc, BK, template), filename="results/tif/TZA_BK_netrev_mean_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$nue, BK, template), filename="results/tif/TZA_BK_nue_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$mvcr, BK, template), filename="results/tif/TZA_BK_mvcr_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$avcr, BK, template), filename="results/tif/TZA_BK_avcr_noMask.tif", overwrite=TRUE)
 
@@ -145,5 +146,6 @@ writeRaster(buildraster(BK$netrev_cv, BK, template), filename="results/tif/TZA_B
 writeRaster(buildraster(BK$yield_mean_gain_perc, BK, template), filename="results/tif/TZA_BK_yield_mean_gain_perc.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$totfertcost_gain_perc, BK, template), filename="results/tif/TZA_BK_totfertcost_gain_perc.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$netrev_mean_gain_perc, BK, template), filename="results/tif/TZA_BK_netrev_mean_gain_perc.tif", overwrite=TRUE)
+writeRaster(buildraster(BK$nue, BK, template), filename="results/tif/TZA_BK_nue.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$mvcr, BK, template), filename="results/tif/TZA_BK_mvcr.tif", overwrite=TRUE)
 writeRaster(buildraster(BK$avcr, BK, template), filename="results/tif/TZA_BK_avcr.tif", overwrite=TRUE)

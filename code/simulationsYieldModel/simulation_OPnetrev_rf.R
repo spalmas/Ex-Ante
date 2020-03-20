@@ -119,6 +119,7 @@ OPnetrev <- OPnetrev %>%
          totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
          netrev_mean_gain_perc = 100*(netrev_mean-ZERO$netrev_mean)/ZERO$netrev_mean,
          ap=ap(yield1=yield_mean, N_kgha1=N_kgha),
+         nue = nue(yield1=yield_mean, yield0=ZERO$yield_mean, N_kgha1=N_kgha),
          mp=mp(yield1=yield_mean, yield0=OPnetrev0$yield, N_kgha1=N_kgha, N_kgha0=OPnetrev0$N_kgha),
          avcr=avcr(output_price=maize_farmgate_price, ap, input_price=N_price),
          mvcr=mvcr(output_price=maize_farmgate_price, mp, input_price=N_price))
@@ -137,7 +138,7 @@ OPnetrev$mvcr[OPnetrev$N_kgha==0] <- NA
 OPnetrev <- OPnetrev %>% dplyr::select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
                                        N_kgha,
                                        yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
-                                       yield_mean_gain_perc, totfertcost_gain_perc, netrev_mean_gain_perc, ap, mp, avcr, mvcr)
+                                       yield_mean_gain_perc, totfertcost_gain_perc, netrev_mean_gain_perc, ap, nue, mp, avcr, mvcr)
 
 #### \\ Writing rasters with no SPAM mask ####
 template <- rast("data/CGIAR-SRTM/srtm_slope_TZA.tif")
@@ -150,6 +151,7 @@ writeRaster(buildraster(OPnetrev$netrev_cv, OPnetrev, template), filename="resul
 writeRaster(buildraster(OPnetrev$yield_mean_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_gain_perc_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$totfertcost_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gain_perc_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$netrev_mean_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$nue, OPyield, template), filename="results/tif/TZA_OPnetrev_nue_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$avcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_avcr_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_mvcr_noMask.tif", overwrite=TRUE)
 
@@ -169,6 +171,7 @@ writeRaster(buildraster(OPnetrev$netrev_cv, OPnetrev, template), filename="resul
 writeRaster(buildraster(OPnetrev$yield_mean_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_gain_perc.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$totfertcost_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gain_perc.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$netrev_mean_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_gain_perc.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$nue, OPyield, template), filename="results/tif/TZA_OPnetrev_nue.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$avcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_avcr.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_mvcr.tif", overwrite=TRUE)
 
