@@ -329,7 +329,7 @@ hh_summary_stats <- TZAPS_subset %>%
   t() %>% data.frame() %>% rownames_to_column("variable")
 
 hh_summary_stats
-write.table(hh_summary_stats,file="../results/tables/hh_summary_stats.csv", sep=",", row.names = FALSE)
+write.table(hh_summary_stats,file="../data/hh_summary_stats.csv", sep=",", row.names = FALSE)
 print(paste0("Number of observations: ", nrow(TZAPS_subset)))
 
 ```

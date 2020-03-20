@@ -393,6 +393,60 @@ write_csv(results, path = paste0('../results/tables/table2_TZA.csv'))
 
 ```
 
+### Table X: Summary table of aggregate gains in net revenue
+```{r, message=FALSE, echo=FALSE, warning=FALSE}
+#regions of tanzania
+gadm36_TZA_1 <- vect("F:/Work/GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_1.shp")
+
+#starts of results table
+results <- data.frame(ID = gadm36_TZA_1$ID, Region = gadm36_TZA_1$NAME_1)
+
+#Rural population
+pop2020 <- rast("F:/Work/WorldPop/Africa/AFR_PPP_2020_adj_v2.tif")
+results$pop2020 <- as.vector(terra::extract(pop2020, gadm36_TZA_1, fun = sum, na.rm=TRUE, drop=TRUE))
+urban_perc <- readxl::read_xlsx("F:/Work/Tanzania/rural-urban_population/muzzini-WB.xlsx", sheet = "data") %>% select(Region, Statistical) %>% rename(urban_perc = Statistical)
+results <- left_join(results, urban_perc, by = "Region")
+results$rural_pop2020 <- results$pop2020 * (100-results$urban_perc)/100
+
+#SPAM to get the hectares under maize production
+SPAM2010 <- rast("F:/Work/SPAM/spam2010v1r1/spam2010v1r1_global_phys_area.geotiff/spam2010V1r1_global_A_MAIZ_A.tif")
+results$Maize_ha <- as.vector(terra::extract(SPAM2010, gadm36_TZA_1, fun = sum, na.rm=TRUE, drop=TRUE))
+
+#Expected total returns USD/ha*ha of maize if move from ZERO to OPnetrev and from BK to OPnetrev
+OPnetrev <- read_csv("../results/tables/TZA_OPnetrev.csv")
+
+OPnetrev_ZERO <- read_csv("../results/tables/TZA_ZERO.csv") %>%
+  mutate(OPnetrev_ZERO_netrev_gain = OPnetrev$netrev_mean - netrev_mean) %>% 
+  group_by(gadm36_TZA_1) %>% #these are from the ID values in the rasterize in preprocess_rasters.sh
+  summarise(netrev_gain = mean(OPnetrev_ZERO_netrev_gain)) %>% 
+  rename(ID = gadm36_TZA_1)
+results$OPnetrev_ZERO_netrev_gain <- left_join(results, OPnetrev_ZERO, by="ID")$netrev_gain
+
+OPnetrev_BK <- read_csv("../results/tables/TZA_BK.csv") %>% 
+  mutate(OPnetrev_BK_netrev_gain = OPnetrev$netrev_mean - netrev_mean) %>% 
+  group_by(gadm36_TZA_1) %>% #these are from the ID values in the rasterize in preprocess_rasters.sh
+  summarise(netrev_gain = mean(OPnetrev_BK_netrev_gain)) %>% 
+  rename(ID = gadm36_TZA_1)
+results$OPnetrev_BK_netrev_gain <- left_join(results, OPnetrev_BK, by="ID")$netrev_gain
+
+
+#selecting and rounding result for printing
+results <- results %>% select(Region, rural_pop2020, Maize_ha, OPnetrev_ZERO_netrev_gain, OPnetrev_BK_netrev_gain) %>% 
+  filter(!is.na(OPnetrev_BK_netrev_gain)) %>% 
+  mutate(rural_pop2020 = round(rural_pop2020),
+         Maize_ha = round(Maize_ha),
+         OPnetrev_ZERO_netrev_gain = round(OPnetrev_ZERO_netrev_gain, digits=1),
+         OPnetrev_BK_netrev_gain = round(OPnetrev_BK_netrev_gain, digits=1))
+
+
+#### \\ Printing table ####
+knitr::kable(results)
+
+#### \\ finishing touches ####
+write_csv(results, path = paste0('../results/tables/tableX_aggregateGains.csv'))
+
+```
+
 
 ### Figure X: avcr in selected regions
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
