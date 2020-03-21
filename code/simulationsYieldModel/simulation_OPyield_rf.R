@@ -16,7 +16,7 @@ library(terra)
 source("code/simulationsYieldModel/N_to_netrev.R")
 source("code/buildraster.R")
 source("code/fertilizer_prof_measures.R")
-load("results/models/yield.rf2.rda")  #loading random forest model. `load` has less problems than `readRDS` that I think changes the file somehow
+load("data/models/yield.rf2.rda")  #loading random forest model. `load` has less problems than `readRDS` that I think changes the file somehow
 
 #### +++++++ TIMING +++++++ ####
 t0 <- Sys.time()

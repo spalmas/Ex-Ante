@@ -36,8 +36,8 @@ rasters_input <- cbind(rasters_input,
                        values(SPAM2010))
                        
 ########## ISRIC RASTERS  ############### 
-af_ORCDRC_T__M_sd1_5000m_TZA <- rast("/media/sp/SPHD/Work/Ex-Ante/data/files.isric.org/af_ORCDRC_T__M_sd1_5000m_TZA.tif")
-af_PHIHOX_T__M_sd1_5000m_TZA <- rast("/media/sp/SPHD/Work/Ex-Ante/data/files.isric.org/af_PHIHOX_T__M_sd1_5000m_TZA.tif")
+af_ORCDRC_T__M_sd1_5000m_TZA <- rast("data/files.isric.org/af_ORCDRC_T__M_sd1_5000m_TZA.tif")
+af_PHIHOX_T__M_sd1_5000m_TZA <- rast("data/files.isric.org/af_PHIHOX_T__M_sd1_5000m_TZA.tif")
 
 rasters_input <- cbind(rasters_input,
                        values(af_ORCDRC_T__M_sd1_5000m_TZA),
@@ -75,11 +75,11 @@ rasters_input <- rasters_input[complete.cases(rasters_input[, colnames(rasters_i
 
 #### ADDING CONSTANT SOCIOECONOMIC VARIABLES FOUND IN TZAPS
 #the table of summary statistics is calculated in yield_response_fit.rmd
-hh_summary_stats <- read_csv("results/tables/hh_summary_stats.csv") 
+hh_summary_stats <- read.csv("data/hh_summary_stats.csv") 
 hh_summary_stats_columns <- hh_summary_stats %>% dplyr::select(mean) %>% t() %>% data.frame()
-colnames(hh_summary_stats_columns) <- hh_summary_stats$variable
-
-rasters_input <- cbind(rasters_input, hh_summary_stats_columns)
+colnames(hh_summary_stats_columns) <- hh_summary_stats$variable  #the t matrix does not keep the variable names
+row.names(hh_summary_stats_columns) <- NULL  #the row name was causing an error when doing the cbind
+rasters_input <- cbind(rasters_input, hh_summary_stats_columns)  #binding the values to the table. All pixels have the same hh values
 
 #### PRINTING TO CHECK ####
 head(rasters_input)

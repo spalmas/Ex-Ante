@@ -13,7 +13,7 @@ library(tidyverse)
 source("code/buildraster.R")
 source("code/fertilizer_prof_measures.R")
 source("code/yield_response.R")
-load("results/models/yield.rf2.rda")  #loading random forest model. `load` has less problems than `readRDS` that I think changes the file somehow
+load("data/models/yield.rf2.rda")  #loading random forest model. `load` has less problems than `readRDS` that I think changes the file somehow
 
 #### +++++++ TABLE OF PIXEL VALUES +++++++ ####
 rasters_input <- read.table("data/TZA_soilprice_table.txt", header=TRUE, sep=" ")
