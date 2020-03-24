@@ -11,6 +11,7 @@ gc()
 library(terra)
 library(tidyverse)
 
+
 ########## RASTER TO USE FOR BUILDING TABLE AND AS TEMPLATE TO WARP  ############### 
 srtm_TZA <- rast("data/CGIAR-SRTM/srtm_TZA.tif")
 
@@ -67,6 +68,34 @@ for (rainfall_raster in rainfall_rasters){
   rasters_input <- cbind(rasters_input, values(rainfall))
   seasons <- c(seasons, names(rainfall))
 }
+
+#I couldn't do this in gdal because an overflow error
+r1 <- rast("data/rainfall/rfe1987_12-1988_05.v3_sum_TZA.tif")
+r2 <- rast("data/rainfall/rfe1995_12-1996_05.v3_sum_TZA.tif")
+r3 <- rast("data/rainfall/rfe1996_12-1997_05.v3_sum_TZA.tif")
+r4 <- rast("data/rainfall/rfe1999_12-2000_05.v3_sum_TZA.tif")
+r5 <- rast("data/rainfall/rfe2000_12-2001_05.v3_sum_TZA.tif")
+r6 <- rast("data/rainfall/rfe2001_12-2002_05.v3_sum_TZA.tif")
+r7 <- rast("data/rainfall/rfe2002_12-2003_05.v3_sum_TZA.tif")
+r8 <- rast("data/rainfall/rfe2003_12-2004_05.v3_sum_TZA.tif")
+r9 <- rast("data/rainfall/rfe2005_12-2006_05.v3_sum_TZA.tif")
+r10 <- rast("data/rainfall/rfe2007_12-2008_05.v3_sum_TZA.tif")
+r11 <- rast("data/rainfall/rfe2008_12-2009_05.v3_sum_TZA.tif")
+r12 <- rast("data/rainfall/rfe2009_12-2010_05.v3_sum_TZA.tif")
+r13 <- rast("data/rainfall/rfe2010_12-2011_05.v3_sum_TZA.tif")
+r14 <- rast("data/rainfall/rfe2011_12-2012_05.v3_sum_TZA.tif")
+r15 <- rast("data/rainfall/rfe2012_12-2013_05.v3_sum_TZA.tif")
+r16 <- rast("data/rainfall/rfe2013_12-2014_05.v3_sum_TZA.tif")
+r17 <- rast("data/rainfall/rfe2014_12-2015_05.v3_sum_TZA.tif")
+r18 <- rast("data/rainfall/rfe2015_12-2016_05.v3_sum_TZA.tif")
+r19 <- rast("data/rainfall/rfe2016_12-2017_05.v3_sum_TZA.tif")
+r20 <- rast("data/rainfall/rfe2017_12-2018_05.v3_sum_TZA.tif")
+r21 <- rast("data/rainfall/rfe2018_12-2019_05.v3_sum_TZA.tif")
+rmean <- (r1+r2+r3+r4+r5+r6+r7+r8+r9+r10+r11+r12+r13+r14+r15+r16+r17+r18+r19+r20+r21)/21
+names(rmean) <- "rfeDEC-MAY.v3_MEAN_TZA"
+writeRaster(rmean, filename = "data/rainfall/rfeDEC-MAY.v3_MEAN_TZA.tif", overwrite=TRUE)
+rasters_input <- cbind(rasters_input, values(rmean))
+
 
 #### KEEPING ONLY COMPLETE CASES
 #SPAM will not count for the complete cases because we want to simulate all Tanzania for TZAPS compare.

@@ -74,7 +74,7 @@ road_speeds <- cbind(roads=c(1,2,3), speeds = c(0.001, 0.0015, 0.002))
 
 rd_cost2 <- classify(x=rd_cost,
                      rcl = road_speeds,
-                     filename="../results/tif/road_cost2.tif",
+                     filename="../results/tif/access/road_cost2.tif",
                      overwrite=TRUE)
 
 plot(rd_cost2, main="Travel cost (min/m)")
@@ -130,7 +130,7 @@ We need to warp to match the other layers.
 ```{r}
 lc_cost <- warp(tza_lc_cost, tza_slope,
                 method="ngb",
-                filename="../results/tif/lc_cost.tif",
+                filename="../results/tif/access/lc_cost.tif",
                 overwrite=TRUE,
                 wopt=list(names="lc_cost"))
 plot(lc_cost, main = "Travel costs (min/m) depending on land cover class")
@@ -148,7 +148,7 @@ all_cost <- c(rd_cost2, lc_cost)
 #getting the minimum value of each grid cell
 cost <- min(all_cost, na.rm=TRUE)*slope_cost
 
-writeRaster(cost, filename = "../results/tif/cost.tif", overwrite=TRUE)
+writeRaster(cost, filename = "../results/tif/access/cost.tif", overwrite=TRUE)
 
 #areas near mountains have very high slope resulting in really high costs. I added a zlim value for better representation
 
@@ -174,7 +174,7 @@ The transition object represent the weights given to each connection between pix
 # Combine the cost layers
 library(gdistance)
 
-cost <- raster("../results/tif/cost.tif")  #min/m
+cost <- raster("../results/tif/access/cost.tif")  #min/m
 
 #converting to conductance values with correct units
 conductance <- 1/cost
@@ -209,7 +209,7 @@ cities <- SpatialPoints(cbind(cities$x, cities$y))
 #Estimating access of each pixel to the nearest 50k city
 A <- accCost(trans, fromCoords=cities) 
 
-writeRaster(A, filename = "../results/tif/accCost50k.tif", overwrite=TRUE)
+writeRaster(A, filename = "../results/tif/access/ccCost50k.tif", overwrite=TRUE)
 
 plot(A, zlim=c(0,4000),
      main="Access to markets (cities > 50k) in Tanzania (min)")

@@ -50,34 +50,22 @@ optim_pixel <- function(pixel){
 }
 #optim_pixel(pixel) #to test
 
-#### \\ Start cluster  ####
+#### Start cluster  ####
 cl <- makeCluster(detectCores(), type = "FORK") #FORK only available in UNIX systems
 
-# Apply optimization for each row for all seasons of rainfall
-for(season in seasons){
-  #season <- seasons[1]
-  OPnetrev$seas_rainfall <- OPnetrev[[season]]  #seasonal rainfall to simulate
-  
-  #applying optimize function over all rows
-  solutions <- parApply(cl = cl, X = OPnetrev, MARGIN = 1, FUN = optim_pixel)  #parallel version
-  #solutions <- apply(X = OPnetrev, MARGIN = 1, FUN = optim_pixel)  #not parallel version
-  
-  #storing results
-  OPnetrev[, paste0("N_kgha_", season)] <- floor(solutions[1,])  #floor to just store integers
-  OPnetrev[, paste0("netrev_", season)] <- floor(-solutions[2,])  #floor to just store integers. Need to invert negative from rf_wrapper
-  
-  #Calculating yield
-  #netrev = yield*farmgate_price-N_kgha*N_price  ------>  yield = (netrev + N_kgha*totfertcost)/maize_price
-  OPnetrev[paste0("yield_", season)] <-(OPnetrev[paste0("netrev_", season)] + OPnetrev[paste0("N_kgha_", season)]*OPnetrev$N_price) / OPnetrev$maize_farmgate_price
-  print(paste0("Finished: ", season, ". Time: ", Sys.time() - t0))
-}
+# Apply optimization for each row using the mean season of rainfall
+OPyield$seas_rainfall <- OPyield$rfeDEC-MAY.v3_MEAN_TZA  #mena seasonal rainfall to simulate
+
+#applying optimize function over all rows
+solutions <- parApply(cl = cl, X = OPnetrev, MARGIN = 1, FUN = optim_pixel)  #parallel version
+#solutions <- apply(X = OPnetrev, MARGIN = 1, FUN = optim_pixel)  #not parallel version
+
+#storing results
+OPnetrev$N_kgha <- floor(solutions[1,])  #floor to just store integers
+OPnetrev$totfertcost <- OPnetrev$N_kgha * OPnetrev$N_price #total fertilizer cost
 
 #### \\ End cluster  ####
 stopCluster(cl)
-
-#### \\ Using the mean optimized N_kgha as the best possible value  ####
-OPnetrev$N_kgha <- OPnetrev[,paste0("N_kgha_", seasons)] %>% rowMeans(na.rm = TRUE)
-OPnetrev$totfertcost <- OPnetrev$N_kgha * OPnetrev$N_price #total fertilizer cost
 
 
 ########## +++++++ VARIABILITY +++++++ ###############
@@ -115,9 +103,9 @@ ZERO <- read.csv("results/tables/TZA_ZERO_noMask.csv")
 
 #### \\ Calculating totfercost, netrevenue, changes and fertilizer profitabilities for OPnetrev ####
 OPnetrev <- OPnetrev %>% 
-  mutate(yield_mean_gain_perc = 100*(yield_mean-ZERO$yield_mean)/ZERO$yield_mean,
-         totfertcost_gain_perc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
-         netrev_mean_gain_perc = 100*(netrev_mean-ZERO$netrev_mean)/ZERO$netrev_mean,
+  mutate(yield_mean_gainPerc = 100*(yield_mean-ZERO$yield_mean)/ZERO$yield_mean,
+         totfertcost_gainPerc = 100*(totfertcost-ZERO$totfertcost)/ZERO$totfertcost,
+         netrev_mean_gainPerc = 100*(netrev_mean-ZERO$netrev_mean)/ZERO$netrev_mean,
          ap=ap(yield1=yield_mean, N_kgha1=N_kgha),
          nue = nue(yield1=yield_mean, yield0=ZERO$yield_mean, N_kgha1=N_kgha),
          mp=mp(yield1=yield_mean, yield0=OPnetrev0$yield, N_kgha1=N_kgha, N_kgha0=OPnetrev0$N_kgha),
@@ -138,7 +126,7 @@ OPnetrev$mvcr[OPnetrev$N_kgha==0] <- NA
 OPnetrev <- OPnetrev %>% dplyr::select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
                                        N_kgha,
                                        yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
-                                       yield_mean_gain_perc, totfertcost_gain_perc, netrev_mean_gain_perc, ap, nue, mp, avcr, mvcr)
+                                       yield_mean_gainPerc, totfertcost_gainPerc, netrev_mean_gainPerc, ap, nue, mp, avcr, mvcr)
 
 #### \\ Writing rasters with no SPAM mask ####
 template <- rast("data/CGIAR-SRTM/srtm_slope_TZA.tif")
@@ -148,9 +136,9 @@ writeRaster(buildraster(OPnetrev$totfertcost, OPnetrev, template), filename="res
 writeRaster(buildraster(OPnetrev$netrev_mean, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$netrev_sd, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_sd_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$netrev_cv, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_cv_noMask.tif", overwrite=TRUE)
-writeRaster(buildraster(OPnetrev$yield_mean_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_gain_perc_noMask.tif", overwrite=TRUE)
-writeRaster(buildraster(OPnetrev$totfertcost_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gain_perc_noMask.tif", overwrite=TRUE)
-writeRaster(buildraster(OPnetrev$netrev_mean_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_gain_perc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$yield_mean_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_gainPerc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$totfertcost_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gainPerc_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$netrev_mean_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_gainPerc_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$nue, OPyield, template), filename="results/tif/TZA_OPnetrev_nue_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$avcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_avcr_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_mvcr_noMask.tif", overwrite=TRUE)
@@ -168,9 +156,9 @@ writeRaster(buildraster(OPnetrev$totfertcost, OPnetrev, template), filename="res
 writeRaster(buildraster(OPnetrev$netrev_mean, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$netrev_sd, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_sd.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$netrev_cv, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_cv.tif", overwrite=TRUE)
-writeRaster(buildraster(OPnetrev$yield_mean_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_gain_perc.tif", overwrite=TRUE)
-writeRaster(buildraster(OPnetrev$totfertcost_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gain_perc.tif", overwrite=TRUE)
-writeRaster(buildraster(OPnetrev$netrev_mean_gain_perc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_gain_perc.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$yield_mean_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_gainPerc.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$totfertcost_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gainPerc.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$netrev_mean_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_gainPerc.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$nue, OPyield, template), filename="results/tif/TZA_OPnetrev_nue.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$avcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_avcr.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_mvcr.tif", overwrite=TRUE)
