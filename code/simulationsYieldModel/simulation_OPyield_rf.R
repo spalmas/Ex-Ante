@@ -52,7 +52,7 @@ optim_pixel <- function(pixel){
 cl <- makeCluster(detectCores(), type = "FORK") #FORK only available in UNIX systems
 
 # Apply optimization for each row using the mean season of rainfall
-OPyield$seas_rainfall <- OPyield$rfeDEC-MAY.v3_MEAN_TZA  #mena seasonal rainfall to simulate
+OPyield$seas_rainfall <- OPyield$rfeDEC.MAY.v3_MEAN_TZA  #mena seasonal rainfall to simulate
 
 #applying optimize function
 solutions <- parApply(cl = cl, X = OPyield, MARGIN = 1, FUN = optim_pixel)  #parallel version
