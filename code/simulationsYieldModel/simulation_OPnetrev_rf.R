@@ -26,9 +26,6 @@ print(t0)
 OPnetrev <- read.table("data/TZA_soilprice_table.txt", header=TRUE, sep=" ")
 
 #### +++++++ SIMULATION +++++++ #### 
-########## \\ Getting the names of rainfall seasons to use for results table  ###############
-seasons <- OPnetrev %>% dplyr::select(starts_with("rfe")) %>% colnames()
-
 ########## \\ OPnetrev OPTIMIZATION ###############
 #pixel <- OPnetrev[1,] #to test
 #Wrapper for the RF forest to be able to use it inside optimizer function
@@ -54,7 +51,7 @@ optim_pixel <- function(pixel){
 cl <- makeCluster(detectCores(), type = "FORK") #FORK only available in UNIX systems
 
 # Apply optimization for each row using the mean season of rainfall
-OPyield$seas_rainfall <- OPyield$rfeDEC-MAY.v3_MEAN_TZA  #mena seasonal rainfall to simulate
+OPnetrev$seas_rainfall <- OPnetrev$rfeDEC.MAY.v3_MEAN_TZA  #mena seasonal rainfall to simulate
 
 #applying optimize function over all rows
 solutions <- parApply(cl = cl, X = OPnetrev, MARGIN = 1, FUN = optim_pixel)  #parallel version
@@ -69,7 +66,11 @@ stopCluster(cl)
 
 
 ########## +++++++ VARIABILITY +++++++ ###############
-# We will use this mean of optimized values as the N_kgha suggestion to calculate the variability of results
+########## \\ Getting the names of rainfall seasons to use for results table  ###############
+# we are not using the mean rainfall that is also in the table
+seasons <- OPnetrev %>% dplyr::select(starts_with("rfe") & ends_with("sum_TZA")) %>% colnames()
+
+# We will use the optimized value of N_kgha for the mean season to calculate the variability of results
 for(season in seasons){
   #season <- seasons[3] #to test
   OPnetrev$seas_rainfall <- OPnetrev[[season]]  #seasonal rainfall to simulate
@@ -139,7 +140,7 @@ writeRaster(buildraster(OPnetrev$netrev_cv, OPnetrev, template), filename="resul
 writeRaster(buildraster(OPnetrev$yield_mean_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_gainPerc_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$totfertcost_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gainPerc_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$netrev_mean_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_gainPerc_noMask.tif", overwrite=TRUE)
-writeRaster(buildraster(OPnetrev$nue, OPyield, template), filename="results/tif/TZA_OPnetrev_nue_noMask.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$nue, OPnetrev, template), filename="results/tif/TZA_OPnetrev_nue_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$avcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_avcr_noMask.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_mvcr_noMask.tif", overwrite=TRUE)
 
@@ -159,7 +160,7 @@ writeRaster(buildraster(OPnetrev$netrev_cv, OPnetrev, template), filename="resul
 writeRaster(buildraster(OPnetrev$yield_mean_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_yield_mean_gainPerc.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$totfertcost_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_totfertcost_gainPerc.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$netrev_mean_gainPerc, OPnetrev, template), filename="results/tif/TZA_OPnetrev_netrev_mean_gainPerc.tif", overwrite=TRUE)
-writeRaster(buildraster(OPnetrev$nue, OPyield, template), filename="results/tif/TZA_OPnetrev_nue.tif", overwrite=TRUE)
+writeRaster(buildraster(OPnetrev$nue, OPnetrev, template), filename="results/tif/TZA_OPnetrev_nue.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$avcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_avcr.tif", overwrite=TRUE)
 writeRaster(buildraster(OPnetrev$mvcr, OPnetrev, template), filename="results/tif/TZA_OPnetrev_mvcr.tif", overwrite=TRUE)
 

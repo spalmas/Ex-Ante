@@ -26,9 +26,6 @@ print(t0)
 OPyield <- read.table("data/TZA_soilprice_table.txt", header=TRUE, sep=" ")
 
 #### +++++++ SIMULATION +++++++ #### 
-########## \\ Getting the names of rainfall seasons to use for results table  ###############
-seasons <- OPyield %>% dplyr::select(starts_with("rfe")) %>% colnames()
-
 ########## \\ OPyield OPTIMIZATION ###############
 #pixel <- OPyield[1,] #to test
 #Wrapper for the RF forest to be able to use it inside optimizer function
@@ -67,7 +64,11 @@ stopCluster(cl)
 
 
 ########## +++++++ VARIABILITY +++++++ ###############
-# We will use this mean of optimized values as the N_kgha suggestion to calculate the variability of results
+########## \\ Getting the names of rainfall seasons to use for results table  ###############
+# we are not using the mean rainfall that is also in the table
+seasons <- OPyield %>% dplyr::select(starts_with("rfe") & ends_with("sum_TZA")) %>% colnames()
+
+# We will use the optimized value of N_kgha for the mean season to calculate the variability of results
 for(season in seasons){
   #season <- seasons[3] #to test
   OPyield$seas_rainfall <- OPyield[[season]]  #seasonal rainfall to simulate
