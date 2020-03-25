@@ -129,6 +129,7 @@ OPnetrev <- OPnetrev %>% dplyr::select(index, gadm36_TZA_1, spam2010V1r1_global_
                                        yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
                                        yield_mean_gainPerc, totfertcost_gainPerc, netrev_mean_gainPerc, ap, nue, mp, avcr, mvcr)
 
+
 #### \\ Writing rasters with no SPAM mask ####
 template <- rast("data/CGIAR-SRTM/srtm_slope_TZA.tif")
 writeRaster(buildraster(OPnetrev$N_kgha, OPnetrev, template), filename="results/tif/TZA_OPnetrev_N_kgha_noMask.tif", overwrite=TRUE)

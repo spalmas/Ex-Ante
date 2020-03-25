@@ -305,7 +305,7 @@ figure2 <- ggarrange(seas_rainfall_plot, N_kgha_plot, ORCDRC_plot, yield_fit_plo
                      labels=c("A", "B", "C", "D"),
                      ncol=2, nrow=2)
 figure2
-ggsave(filename = "D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/figures/Figure3_yieldfit.tif",
+ggsave(filename = "D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/figures/Fig2_yieldfit.tif",
        plot = figure2,
        width = 15, height = 15, units = "cm", device = "tiff")
 ```

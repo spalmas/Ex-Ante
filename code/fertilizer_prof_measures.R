@@ -18,7 +18,8 @@ ap <- function(yield1, N_kgha1){
 
 #Nitrogen use efficiency
 nue <- function(yield1, yield0, N_kgha1){
-  100*(yield1-yield0)/N_kgha1
+  e <- (yield1-yield0)/N_kgha1
+  ifelse(is.infinite(e), return(NA), return(e))
 }
 
 #Marginal product
