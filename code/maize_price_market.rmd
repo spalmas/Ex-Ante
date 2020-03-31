@@ -1,7 +1,7 @@
 ---
 title: "Random Forest Prediction of Market Maize Prices"
 #author: "Kevin Oluoch, Sebastian Palmas"
-#date: "2019/11/04"
+date:  "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 ---
 
@@ -35,12 +35,17 @@ This data is made up of maize prices collectted at various locations across Tanz
 ```{r }
 maize.price_table <- read.csv("F:/Work/LSMS/TZA/maize_prices_2015/local_maize_prices_2015.csv")
 maize.price <- vect( cbind(maize.price_table$lon_modified, maize.price_table$lat_modified), atts=maize.price_table)
+# wgs84.prj: projection for coordinates in prices csv
 crs(maize.price) <- "+proj=longlat +datum=WGS84 +no_defs"
 maize.price
+
+#export vector to use for map
+toWrite <- sp::SpatialPointsDataFrame(cbind(maize.price_table$lon_modified, maize.price_table$lat_modified),
+                                      data = maize.price_table)
+writeOGR(obj=toWrite, dsn="F:/Work/LSMS/TZA/maize_prices_2015/local_maize_prices_2015.shp",layer = "maize_price", driver="ESRI Shapefile")
 ```
 
 ```{r}
-# wgs84.prj: projection for coordinates in prices csv
 TZA_adm <- geodata::gadm("TZA", level = 0, path=".")
 plot(maize.price, pch = 20, col = "Red", main = "Locations With Known Maize Prices")
 lines(TZA_adm)
@@ -111,7 +116,7 @@ The raster files contain data on weather elements, soil properties and distance 
 
 We create a raster object with all these layers.
 ```{r}
-rasterlist <- list.files(path = "F:/Work/Markus Stacks/TZ_250m_2019/", 
+rasterlist <- list.files(path = "F:/Work/MarkusStacks/TZ_250m_2019/", 
                          pattern = "*.tif$", 
                          full.names = TRUE) # Character vector of relative filepaths
 rasterstack <- rast(rasterlist)
@@ -135,17 +140,17 @@ latitudes <- sort(latitudes, decreasing=TRUE)
 natbnd.raster.long <- rasterstack[[1]]
 values(natbnd.raster.long) <- longitudes
 names(natbnd.raster.long) <- "Longitude"  #changing the name of the values
-writeRaster(natbnd.raster.long, filename = "F:/Work/Markus Stacks/TZ_250m_2019/long.tif", overwrite=TRUE)
+writeRaster(natbnd.raster.long, filename = "F:/Work/MarkusStacks/TZ_250m_2019/long.tif", overwrite=TRUE)
 
 natbnd.raster.lat <- rasterstack[[1]]
 values(natbnd.raster.lat) <- latitudes
 names(natbnd.raster.lat) <- "Latitude"  #changing the name of the values
-writeRaster(natbnd.raster.lat, filename = "F:/Work/Markus Stacks/TZ_250m_2019/lat.tif", overwrite=TRUE)
+writeRaster(natbnd.raster.lat, filename = "F:/Work/MarkusStacks/TZ_250m_2019/lat.tif", overwrite=TRUE)
 ```
 
 ```{r, echo = FALSE}
-natbnd.raster.long <- rast("F:/Work/Markus Stacks/TZ_250m_2019/long.tif")
-natbnd.raster.lat <- rast("F:/Work/Markus Stacks/TZ_250m_2019/lat.tif")
+natbnd.raster.long <- rast("F:/Work/MarkusStacks/TZ_250m_2019/long.tif")
+natbnd.raster.lat <- rast("F:/Work/MarkusStacks/TZ_250m_2019/lat.tif")
 
 plot(rasterstack$Longitude, main="Longitude")
 plot(rasterstack$Latitude, main="Latitude")
@@ -155,7 +160,6 @@ We end up with a raster stack of all the 43 prediction variables.
 ```{r}
 names(rasterstack)
 ```
-
 
 
 # (II) Regression Model - Random Forest
@@ -171,10 +175,10 @@ library(randomForest)
 First, we prepare the model training data (response variable and prediction variables). The response variable is composed of georeferenced point data and the prediction variables rasters in a stack; we extract values from locations with a response value in the prediction variables to create the training data. A pixel/cell value may include random errors during data collection or processing. To ensure we get a more representational value, we extract the mean of all pixel values within a 5000 meters radius (ground distance) of the response variable location. We remove any columns that have `NA` as the mean (points that fall in areas with no data).
 ```{r}
 predict.vrbs = terra::extract(rasterstack, 
-                  maize.price, 
-                  buffer=5000, # Meters
-                  small=TRUE, 
-                  fun = mean)
+                              maize.price, 
+                              buffer=5000, # Meters
+                              small=TRUE, 
+                              fun = mean)
 
 predict.vrbs.complete <- complete.cases(predict.vrbs)
 
@@ -182,11 +186,8 @@ predict.vrbs <- predict.vrbs[predict.vrbs.complete,]
 ```
 
 
-
-
 ## Tune The Forest
 By "tune the forest", we mean the process of determining the optimal number of variables to consider at each split in a decision-tree. Too many prediction variables and the algorithm will over-fit; too few prediction variables and the algorithm will under-fit. so first, we use `tuneRF` function to get the possible optimal numbers of prediction variables. The `tuneRF` function takes two arguments: the prediction variables and the response variable.
-
 
 ```{r}
 trf <- tuneRF(x=predict.vrbs, # Prediction variables
@@ -204,10 +205,9 @@ trf <- tuneRF(x=predict.vrbs, # Prediction variables
 We create a model with the `randomForest` function which takes as arguments: the response variable the prediction variables and the optimal number of variables to consider at each split (estimated above). We also get the function to rank the prediction variables based on how much influence they have in the decision-trees' results.
 ```{r}
 price.model <- randomForest(x=predict.vrbs, # Prediction variables
-                             y=maize.price$maipkg[predict.vrbs.complete], # Responce variable
-                             mtry=mintree, # Number of variables in subset at each split
-                             importance = TRUE # Assess importance of predictors.
-                             )
+                            y=maize.price$maipkg[predict.vrbs.complete], # Responce variable
+                            mtry=mintree, # Number of variables in subset at each split
+                            importance = TRUE) # Assess importance of predictors.
 ```
 
 We can have a look at the model in detail by plotting it to see a plot of the number of trees against OOB error: the error rate as the number of trees increase. 
@@ -235,17 +235,18 @@ The price.model randomForest object can be used to predict the prices for all pi
 
 ```{r}
 spatial.prediction <- terra::predict(rasterstack, # Prediction variable rasters
-                                      price.model, # Prediction  model
-                                      na.rm=TRUE)
+                                     price.model, # Prediction  model
+                                     na.rm=TRUE)
 
-writeRaster(spatial.prediction, filename="F:/Work/MaizePricePredictions/TZA/pred_maize_price1.tif", overwrite=TRUE)
-
+writeRaster(spatial.prediction, filename="F:/Work/MaizePricePredictions/TZA/pred_maize_price1_TZS.tif", overwrite=TRUE)
+spatial.prediction_USD <- spatial.prediction/1598
+writeRaster(spatial.prediction_USD, filename="F:/Work/MaizePricePredictions/TZA/pred_maize_price1_USD.tif", overwrite=TRUE) # to have a USD/kg ver
 ```
 
 The raster of predicted maize prices is our main output; we plot it to see the maize price distribution - prices in Tanzania Shillings per Kilogram.
 ```{r}
 # Get Tanzania Regions Shapefile
-plot(spatial.prediction, main = "Predicted Maize Prices (TZS/kg)")
+plot(spatial.prediction_USD, main = "Predicted Maize Prices (USD/kg)")
 lines(TZA_adm)
 ```
 
@@ -273,11 +274,11 @@ plot_fitness(obs =maize.price$maipkg[predict.vrbs.complete],
 
 ```
 
-To conclude, the predicted maize prices and the observed maize prices are positively are correlated even though the observed prices are mostly figures that are multiples of 50 such as 250, 800 and 1000(TZS/KG). 
+To conclude, the predicted maize prices and the observed maize prices are positively are correlated even though the observed prices are mostly figures that are multiples of 50 such as 250, 800 and 1000 (TZS/KG). 
 
 ## Evaluation with LSMS 2013, village, ward and local data
 ```{r}
-pred_maize_price1 <- rast("F:/Work/MaizePricePredictions/TZA/pred_maize_price1.tif")
+pred_maize_price1_USD <- rast("F:/Work/MaizePricePredictions/TZA/pred_maize_price1_USD.tif")
 
 district_2013 <- read.csv("F:/Work/LSMS/TZA/maize_prices_2013/district_maize_prices_2013.csv")
 ward_2013 <- read.csv("F:/Work/LSMS/TZA/maize_prices_2013/ward_maize_prices_2013.csv")
@@ -290,34 +291,31 @@ local_2013$maipkg[local_2013$maipkg > 2000] <- NA
 #create spatial objects from tables
 district_2013_vect <- vect(district_2013[,c("lon_modified", "lat_modified")],
                            crs = "+proj=longlat +datum=WGS84 +no_defs ")
-district_2013_vect <- terra::project(district_2013_vect, crs=crs(pred_maize_price1))
+district_2013_vect <- terra::project(district_2013_vect, crs=crs(pred_maize_price1_USD))
 
 ward_2013_vect <- vect(ward_2013[,c("lon_modified", "lat_modified")],
                            crs = "+proj=longlat +datum=WGS84 +no_defs ")
-ward_2013_vect <- terra::project(ward_2013_vect, crs=crs(pred_maize_price1))
+ward_2013_vect <- terra::project(ward_2013_vect, crs=crs(pred_maize_price1_USD))
 
 local_2013_vect <- vect(local_2013[,c("lon_modified", "lat_modified")],
                            crs = "+proj=longlat +datum=WGS84 +no_defs ")
-local_2013_vect <- terra::project(local_2013_vect, crs=crs(pred_maize_price1))
+local_2013_vect <- terra::project(local_2013_vect, crs=crs(pred_maize_price1_USD))
 
 #extract values and add them to the tables
-district_2013$pred_maize_price1 <- as.vector(extract(pred_maize_price1, district_2013_vect, drop=TRUE))
-ward_2013$pred_maize_price1 <- as.vector(extract(pred_maize_price1, ward_2013_vect, drop=TRUE))
-local_2013$pred_maize_price1 <- as.vector(extract(pred_maize_price1, local_2013_vect, drop=TRUE))
+district_2013$pred_maize_price1_USD <- as.vector(extract(pred_maize_price1_USD, district_2013_vect, drop=TRUE))
+ward_2013$pred_maize_price1_USD <- as.vector(extract(pred_maize_price1_USD, ward_2013_vect, drop=TRUE))
+local_2013$pred_maize_price1_USD <- as.vector(extract(pred_maize_price1_USD, local_2013_vect, drop=TRUE))
 
 #correlation plots
 plot_fitness(obs =district_2013$maipkg,
-             pred=district_2013$pred_maize_price1,
+             pred=district_2013$pred_maize_price1_USD,
              "District Fitness")
 
 plot_fitness(obs =ward_2013$maipkg,
-             pred=ward_2013$pred_maize_price1,
+             pred=ward_2013$pred_maize_price1_USD,
              "Ward Fitness")
 
 plot_fitness(obs =local_2013$maipkg,
-             pred=local_2013$pred_maize_price1,
+             pred=local_2013$pred_maize_price1_USD,
              "Local Fitness")
-
-
 ```
-

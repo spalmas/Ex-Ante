@@ -49,7 +49,7 @@ rasters_input <- cbind(rasters_input,
 N_price <- rast("data/prices/TZA_N_price.tif")
 rasters_input <- cbind(rasters_input, values(N_price))
 
-maize_farmgate_price <- rast("data/prices/maize_farmgate_price/TZ_maipkghat_fgprice.tif") / 1598 #to convert from Tsh/kg to USD/kg 2013 prices
+maize_farmgate_price <- rast("data/prices/maize_farmgate_price/maize_farmgate_price.tif")
 maize_farmgate_price <- warp(maize_farmgate_price, srtm_TZA)
 names(maize_farmgate_price) <- "maize_farmgate_price"
 rasters_input <- cbind(rasters_input, values(maize_farmgate_price))

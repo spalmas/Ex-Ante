@@ -1,5 +1,5 @@
 ---
-title: "Fertilizer price modeol"
+title: "Fertilizer price model"
 #author: "Sebastian Palmas"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document

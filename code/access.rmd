@@ -9,6 +9,8 @@ output: pdf_document
 
 *Modified from eHandbook script in reagro* 
 
+This access layer is used in the maize_price_farmgate.rmd and in the fertilizer_price.rmd scripts.
+
 ## Transportation cost surface 
 ### Elevation and Slope
 
@@ -18,11 +20,6 @@ tza_alt <- rast("../data/CGIAR-SRTM/srtm_TZA.tif")
 tza_slope <- rast("../data/CGIAR-SRTM/srtm_slope_TZA.tif")
 tza_slope <- 2*pi*tza_slope/100#convert from percentage to radian
 plot(tza_slope, main="Slope (radians)")
-```
-
-```{r gadm, message=FALSE, warning=FALSE}
-adm <- vect("../data/admin/gadm36_TZA_0.shp")
-adm <- project(adm, crs=crs(tza_alt))
 ```
 
 We use the slope layer obtained above to create a decay coefficient that governs how much the slope impacts the speed and that we will apply to each grid cell in the cost surface. We use a decay coefficient of 1.5.
@@ -41,7 +38,7 @@ We will use the slope layer as template for the other rasters that we will creat
 
 
 ```{r plotRoads}
-roads <- reagrodata::reagro_data("tza_roads")
+roads <- reagro::reagro_data("tza_roads")
 roads <- project(roads, crs=crs(tza_slope))
 plot(tza_slope)
 lines(roads)
@@ -84,9 +81,8 @@ plot(rd_cost2, main="Travel cost (min/m)")
 ### Land Cover
 
 ```{r}
-tza_lc <- reagrodata::reagro_data("TZA_globcover")
+tza_lc <- reagro::reagro_data("TZA_globcover")
 plot(tza_lc, main = "GLOBCOVER 2009 v2.3 land classes")
-lines(adm)
 ```
 
 As mentioned above, creating a travel cost surface depending on land cover requires an associated travel cost for each land class. urveys, such as the one the Weiss et al., (2018) paper can be performed to obtain estimates of how long it takes (min/m) individuals to traverse each land cover type. For now, we assign some travel cost values to the different land cover classes in Tanzania.
@@ -182,9 +178,15 @@ conductance <- 1/cost
 #Creating a transition object 
 trans <- transition(conductance,transitionFunction=mean, directions= 8)
 ```
+
 Because the transition layer is based on a lon-lat projection and covers a large area, it requires geocorrection for map distortion as well as for diagonal connections between grid cells.
 ```{r}
 trans <- geoCorrection(trans, type="c")
+
+#writing the transition object to use in maize_price_farmgate.rmd analysis.
+save(trans, file="../results/tif/access/transition.rda")
+
+
 ```
 
 With the transition object, we can now calculate access using the `accCost` function and supplying the coordinates from which to calulate.  
@@ -194,7 +196,7 @@ In this code below, we make create a spatialpoint object with locations cities (
 ```{r}
 #cities <- vect("F:/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_slope)) %>% as.data.frame()
 
-cities <- vect("/media/sp/SPHD/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_alt))
+cities <- vect("F:/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_alt))
 geom(cities)
 
 #getting the projected coordinates and the populatoin
@@ -209,7 +211,7 @@ cities <- SpatialPoints(cbind(cities$x, cities$y))
 #Estimating access of each pixel to the nearest 50k city
 A <- accCost(trans, fromCoords=cities) 
 
-writeRaster(A, filename = "../results/tif/access/ccCost50k.tif", overwrite=TRUE)
+writeRaster(A, filename = "../results/tif/access/accCost50k.tif", overwrite=TRUE)
 
 plot(A, zlim=c(0,4000),
      main="Access to markets (cities > 50k) in Tanzania (min)")
