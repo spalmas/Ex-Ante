@@ -8,7 +8,7 @@ gc()
 library(dplyr)
 library(magrittr)
 library(nloptr)  #for optimization algorithm
-library(parallel)
+#library(parallel)
 library(randomForest)
 library(terra)
 
@@ -46,27 +46,26 @@ optim_pixel <- function(pixel){
 #optim_pixel(pixel) #to test
 
 #### Start cluster  ####
-cl <- makeCluster(detectCores(), type = "FORK") #FORK only available in UNIX systems
+#cl <- makeCluster(detectCores(), type = "FORK") #FORK only available in UNIX systems
 
 # Apply optimization for each row using the mean season of rainfall
 OPyield$seas_rainfall <- OPyield$rfeDEC.MAY.v3_MEAN_TZA  #mena seasonal rainfall to simulate
 
 #applying optimize function
-solutions <- parApply(cl = cl, X = OPyield, MARGIN = 1, FUN = optim_pixel)  #parallel version
-#solutions <- apply(X = OPyield[1:20,], MARGIN = 1, FUN = optim_pixel)  #not parallel version
+#solutions <- parApply(cl = cl, X = OPyield, MARGIN = 1, FUN = optim_pixel)  #parallel version
+solutions <- apply(X = OPyield, MARGIN = 1, FUN = optim_pixel)  #not parallel version
 
 #storing results
 OPyield$N_kgha<- floor(solutions[1,])  #floor to just store integers
 OPyield$totfertcost <- OPyield$N_kgha * OPyield$N_price #total fertilizer cost
 
 #### End cluster  ####
-stopCluster(cl)
-
+#stopCluster(cl)
 
 ########## +++++++ VARIABILITY +++++++ ###############
 ########## \\ Getting the names of rainfall seasons to use for results table  ###############
 # we are not using the mean rainfall that is also in the table
-seasons <- OPyield %>% dplyr::select(starts_with("rfe") & ends_with("sum_TZA")) %>% colnames()
+seasons <- OPyield %>% dplyr::select(contains("05.v3_sum_TZA")) %>% colnames()
 
 # We will use the optimized value of N_kgha for the mean season to calculate the variability of results
 for(season in seasons){

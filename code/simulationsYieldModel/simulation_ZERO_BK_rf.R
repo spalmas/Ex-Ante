@@ -20,7 +20,7 @@ rasters_input <- read.table("data/TZA_soilprice_table.txt", header=TRUE, sep=" "
 
 ########## +++++++ SIMULATION +++++++ ###############
 ########## \\ Getting the names of rainfall seasons to use for results table  ###############
-seasons <- rasters_input %>% dplyr::select(starts_with("rfe")) %>% colnames()
+seasons <- rasters_input %>% dplyr::select(contains("05.v3_sum_TZA")) %>% colnames()
 
 #Table for scenario pixel results
 ZERO <- BK <- rasters_input

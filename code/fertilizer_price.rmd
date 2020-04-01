@@ -1,6 +1,6 @@
 ---
 title: "Fertilizer price model"
-#author: "Sebastian Palmas"
+author: "Sebastian Palmas"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 ---
@@ -18,7 +18,7 @@ library(tidyverse)
 ## Cities
 ```{r}
 tza_alt <- rast("../data/CGIAR-SRTM/srtm_TZA.tif")
-cities <- vect("/media/sp/SPHD/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_alt))
+cities <- vect("F:/Work/Tanzania/ne_10m_populated_places_TZA.shp") %>% project(crs=crs(tza_alt))
 
 #getting the projected coordinates and the populatoin
 cities <- cbind(x=geom(cities)$x, y=geom(cities)$y, POP_MAX=cities$POP_MAX) %>% as.data.frame()
@@ -34,7 +34,7 @@ cities <- sp::SpatialPoints(cbind(cities$x, cities$y))
 
 ## Access to cities of 50k or more
 ```{r}
-acc50k <- rast("../results/tif/accCost50k.tif")
+acc50k <- rast("../results/tif/access/accCost50k.tif")
 plot(acc50k, main="Access to large cities")
 points(cities)
 
