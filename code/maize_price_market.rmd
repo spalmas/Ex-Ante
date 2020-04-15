@@ -50,6 +50,10 @@ TZA_adm <- geodata::gadm("TZA", level = 0, path=".")
 plot(maize.price, pch = 20, col = "Red", main = "Locations With Known Maize Prices")
 lines(TZA_adm)
 ```
+We check the distribution of the training data of market price
+```{r, echo=FALSE}
+summary(maize.price$maipkg[maize.price$maipkg<2000]/1598)
+```
 
 The raster files used in this exercise are in the  [Lambert azimuthal equal-area projection](https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection), which better preserves areas and distances compared with the WGS84 projection. We transform the projection of the maize price shapefile to match this projection since it must share the same projection system with the rasters in any spatial process.
 ```{r}

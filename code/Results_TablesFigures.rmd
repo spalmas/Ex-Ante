@@ -10,8 +10,9 @@ knitr::opts_knit$set(root.dir = getwd())
 ```
 
 # Packages
-```{r, message=FALSE, warning=FALSE}
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 library(directlabels)
+library(ggpubr)   # for theme and ggarrange package
 library(grid)  #for textGrob
 library(gridExtra)  #for grid.arrange
 library(terra)
@@ -48,7 +49,7 @@ Using maize prices collected at known markets across Tanzania in 2015, we predic
 
 The model for maize market price had high fitness with the maize price from known locations (Figure X).
 ```{r, echo=FALSE, warning=FALSE, fig.height=3, fig.width=3,, fig.cap="Figure X. Observed vs predicted maize market prices from a Random Forest model."}
-maize_farmgate_price <- rast("../data/prices/maize_farmgate_price/TZ_maipkghat_fgprice.tif") / 1598 #to convert from Tsh/kg to USD/kg 2013 prices
+maize_farmgate_price <- rast("../data/prices/maize_farmgate_price/maize_farmgate_price.tif") #to convert from Tsh/kg to USD/kg 2013 prices
 
 if(.Platform$OS.type == "unix") {
   maize_price_table <- read.csv("/media/sp/SPHD/Work/LSMS/TZA/maize_prices_2015/local_maize_prices_2015.csv")
@@ -80,17 +81,8 @@ p <- ggplot(data=maize_price_table, aes(x=maipkgUSD_kg, y=maize_price_pred))+
   theme_minimal()+
   theme(panel.grid.minor = element_blank())
 print(p)
-
-ggsave(filename = paste0('../results/figures/FigureX_market_maize_price_point.tif'),
-      plot = p,
-      width = 3, height = 3, units = 'in',
-      device = 'tiff', dpi = 300)
 ```
 
-
-```{r, echo=FALSE, fig.height=4, fig.width=2, fig.cap="Figure X. Predicted market accessibility (A) and predicted maize market price (B) in Tanzania."}
-knitr::include_graphics('../results/plots/FigureX_access_prices.png')
-```
 
 # Use of framework
 
@@ -147,7 +139,7 @@ columns <- c('Scenario',
              paste0("Low netrev area % (<$", round(low_netrev), " USD/ha)"),
              paste0("High netrev area % (>$", round(high_netrev), " USD/ha)"))
 ranges <- matrix(nrow = length(scenarios)*2 - 1, ncol = length(columns)) %>% as_tibble()
-ranges[,1] <- c( 'ZERO','BK', 'OPyield', 'OPnetrev','BK_gain_perc','OPyield_mean_gain_perc','OPnetrev_mean_gain_perc') 
+ranges[,1] <- c( 'ZERO','BK', 'OPyield', 'OPnetrev','BK_gainPerc','OPyield_mean_gainPerc','OPnetrev_mean_gainPerc') 
 colnames(ranges) <- columns
 
 #COUNTRY <- 'TZA'
@@ -171,9 +163,9 @@ for (s in scenarios){
     
     #### \\ Calculating percentage gain distribution from the ZERO scenario ####
     if (s != 'ZERO'){
-      ranges[r + 3,col.start:(col.start+2)] <- c(results[,paste0(i,'_gain_perc')] %>% quantile(0.05, na.rm = T) %>% round, 
-                                                 results[,paste0(i,'_gain_perc')] %>% quantile(0.5, na.rm = T) %>% round,
-                                                 results[,paste0(i,'_gain_perc')] %>% quantile(0.95, na.rm = T) %>% round)    
+      ranges[r + 3,col.start:(col.start+2)] <- c(results[,paste0(i,'_gainPerc')] %>% quantile(0.05, na.rm = T) %>% round, 
+                                                 results[,paste0(i,'_gainPerc')] %>% quantile(0.5, na.rm = T) %>% round,
+                                                 results[,paste0(i,'_gainPerc')] %>% quantile(0.95, na.rm = T) %>% round)    
     }
     #Changing column start for change in variable i
     col.start <- col.start + 3
@@ -190,8 +182,8 @@ knitr::kable(ranges)  #print
 data.table::fwrite(ranges, file = '../results/tables/table1_TZA_Ranges.csv')
 ```
 
-### Yield distribution by scenario
-```{r, echo=FALSE, warning=FALSE}
+### Yield and net revenue distribution by scenario
+```{r, echo=FALSE, warning=FALSE, , fig.height=3, fig.width=6}
 scenarios <- c('ZERO', 'BK', 'OPyield', 'OPnetrev')
 values <- tibble()
 
@@ -205,32 +197,26 @@ for (s in scenarios){
 
 #Getting the percentage increase labels to add in the plot
 ranges <- read.csv('../results/tables/table1_TZA_Ranges.csv') %>% 
-  filter(Scenario %in% c("ZERO", "BK_gain_perc", "OPyield_mean_gain_perc", "OPnetrev_mean_gain_perc")) %>% 
+  filter(Scenario %in% c("ZERO", "BK_gainPerc", "OPyield_mean_gainPerc", "OPnetrev_mean_gainPerc")) %>% 
   dplyr::select(Scenario, yieldMean) %>% 
   mutate(label = paste0(yieldMean, "%"))
-ranges$label[1] <- "0%"
+ranges$label[1] <- NA
 ranges$s <- factor(scenarios, levels=scenarios)
 
 p <- ggplot(values, aes(x=s, y=yield_mean, fill=s)) + 
-  geom_boxplot(outlier.size = 1, notch=TRUE) +
-  labs(x="Scenario",
-       y="Yield (kg/ha)") +
-  geom_label(data=ranges, aes(label=label, fill=s), color="black", x=1:4, y=5500)+
-  annotate("label", label="Average Change:", x=1.7, y=6500)+
+  geom_boxplot(notch=TRUE,
+               outlier.size = 0.3) +
+  labs(y="Yield (kg/ha)") +
+  ylim(0,6000) +
+  geom_label(data=ranges, aes(label=label, fill=s), color="black", x=1:4, y=5400)+
+  annotate("label", label="Average Change", x=3, y=6000)+
   scale_fill_manual(values=cbbPalette) +
   theme_minimal()+
   theme(legend.position = "none",
-        panel.grid.major.x = element_blank())
-print(p)
+        panel.grid.major.x = element_blank(),
+        axis.title.x=element_blank())
 
-ggsave(filename = paste0('../results/figures/FigureX_yield_mean_boxplot.tif'),
-      plot = p,
-      width = 3, height = 3, units = 'in',
-      device = 'tiff', dpi = 300)
-```
-
-### Net revenue distribution by scenario
-```{r, echo=FALSE, warning=FALSE}
+####### +++++++  NET REVENUE +++++++  #######
 scenarios <- c('ZERO', 'BK', 'OPyield', 'OPnetrev')
 values <- tibble()
 
@@ -244,27 +230,34 @@ for (s in scenarios){
 
 #Getting the percentage increase labels to add in the plot
 ranges <- read.csv('../results/tables/table1_TZA_Ranges.csv') %>% 
-  filter(Scenario %in% c("ZERO", "BK_gain_perc", "OPyield_mean_gain_perc", "OPnetrev_mean_gain_perc")) %>% 
+  filter(Scenario %in% c("ZERO", "BK_gainPerc", "OPyield_mean_gainPerc", "OPnetrev_mean_gainPerc")) %>% 
   dplyr::select(Scenario, netrevMean) %>% 
   mutate(label = paste0(netrevMean, "%"))
-ranges$label[1] <- "0%"  #for scenario ZERO
+ranges$label[1] <- NA  #for scenario ZERO
 ranges$s <- factor(scenarios, levels=scenarios)
 
-p <- ggplot(values, aes(x=s, y=netrev_mean, fill=s)) + 
-  geom_boxplot(notch=TRUE) +
-  labs(x="Scenario",
-       y="Net revenue (USD/ha)") +
-  geom_label(data=ranges, aes(label=label), color="black", x=1:4, y=800)+
-  annotate("label", label="Average Change:", x=1, y=900)+
+r <- ggplot(values, aes(x=s, y=netrev_mean, fill=s)) + 
+  geom_boxplot(notch =TRUE,
+               outlier.size = 0.3) +
+  geom_hline(yintercept = 0, color='coral', size=1) +
+  labs(y="Net revenue (USD/ha)") +
+  ylim(-500,3000) +
+  geom_label(data=ranges, aes(label=label), color="black", x=1:4, y=2600)+
+  annotate("label", label="Average Change", x=3, y=3000)+
   scale_fill_manual(values=cbbPalette) + 
   theme_minimal() +
   theme(legend.position = "none",
-        panel.grid.major.x = element_blank())
-print(p)
+        panel.grid.major.x = element_blank(),
+        axis.title.x=element_blank())
 
-ggsave(filename = paste0('../results/figures/FigureX_netrev_boxplot.tif'),
-      plot = p,
-      width = 3, height = 3, units = 'in',
+figureX <- ggarrange(p, r,labels=c("A", "B"),
+                     ncol=2, nrow=1)
+figureX
+
+
+ggsave(filename = paste0('D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/figures/Fig4_yield_netrev_boxplot.tif'),
+      plot = figureX,
+      width = 6, height = 3, units = 'in',
       device = 'tiff', dpi = 300)
 
 ```
@@ -327,6 +320,8 @@ print(p)
 
 
 ### Table 2: Percentage of areas with high profitability by scenario by district
+This estimate is only areas covered with maize
+
 ```{r, message=FALSE, echo=FALSE, warning=FALSE}
 #Low and high netrev values will bebased on 10 and 90% percenties of the ZERO simulation
 ZERO <- read.csv('../results/tables/TZA_ZERO.csv') 
@@ -336,10 +331,10 @@ scenarios <- c('ZERO', 'BK', 'OPyield', 'OPnetrev')
 cols <- length(scenarios)  + 2
 
 #### \\ Getting total area of maize per adm_1 and AEZ
-FIDS_gadm36_TZA_1 <- unique(ZERO$gadm36_TZA_1) %>% sort()
-n_gadm36_TZA_1 <- length(FIDS_gadm36_TZA_1)
-pixel_size <- 5*5  #pixel size 
-area_gadm36_TZA_1 <- table(ZERO$gadm36_TZA_1) * pixel_size
+FIDS_gadm36_TZA_1 <- unique(ZERO$gadm36_TZA_1) %>% sort()  
+n_gadm36_TZA_1 <- length(FIDS_gadm36_TZA_1)  #how many regions
+pixel_area <- 5*5  #pixel size (km2) 
+area_gadm36_TZA_1 <- table(ZERO$gadm36_TZA_1) * pixel_area  #Area of each region
 
 #table to get the district names
 gadm36_TZA_1 <- read_csv("../data/admin/gadm36_TZA_1.csv") 
@@ -347,7 +342,7 @@ gadm36_TZA_1 <- read_csv("../data/admin/gadm36_TZA_1.csv")
 #### \\ Creating matrix ####
 results <- matrix(nrow = n_gadm36_TZA_1, ncol = cols)
 colnames(results) = c('District',
-                      'Area (km2)',
+                      'Maize Area (km2)',
                       paste0('ZERO (>$', high_netrev ,')'),
                       paste0('BK (>$', high_netrev ,')'),
                       paste0('OPyield (>$', high_netrev ,')'),
@@ -361,19 +356,19 @@ results[1:n_gadm36_TZA_1, 1] <- gadm36_TZA_1$NAME_1[match(FIDS_gadm36_TZA_1, gad
 results[1:n_gadm36_TZA_1, 2] <- area_gadm36_TZA_1
 
 #### \\ scenario results ####
-co <- 3
+co <- 3  #starting column to store results
 for (s in scenarios){
-  #s <- 'OPnetrev'  #to test
-  pixel_results <- paste0('../results/tables/TZA_', s,'_noMask.csv') %>% read.csv()
-  dim(pixel_results)
+  #s <- 'ZERO'  #to test
+  pixel_results <- paste0('../results/tables/TZA_', s,'.csv') %>% read.csv()
+  
   #changing gadm36_TZA_1 to factor characters
   pixel_results$gadm36_TZA_1 <- pixel_results$gadm36_TZA_1 %>% factor()
   
-  #which pixels have high profitabiliyt?
+  #Number of pixels with high profitability
   pixel_high_netrev <- pixel_results$netrev_mean >= high_netrev
   
   #areas of each gadm36_TZA_1 and aez with high profitability
-  results[1:n_gadm36_TZA_1,co] <- pixel_results$gadm36_TZA_1[pixel_high_netrev] %>% table()
+  results[1:n_gadm36_TZA_1,co] <- pixel_area * pixel_results$gadm36_TZA_1[pixel_high_netrev] %>% table()
   
   co <- co + 1
 }
@@ -433,69 +428,38 @@ results$OPnetrev_BK_netrev_gain <- left_join(results, OPnetrev_BK, by="ID")$netr
 #selecting and rounding result for printing
 results <- results %>% select(Region, rural_pop2020, Maize_ha, OPnetrev_ZERO_netrev_gain, OPnetrev_BK_netrev_gain) %>% 
   filter(!is.na(OPnetrev_BK_netrev_gain)) %>% 
-  mutate(rural_pop2020 = round(rural_pop2020),
-         Maize_ha = round(Maize_ha),
+  mutate(rural_pop2020 = round(rural_pop2020/1000000,digits = 1),  #million peopel
+         Maize_ha = round(Maize_ha/100,digits=1),  #to convert ha to km2
          OPnetrev_ZERO_netrev_gain = round(OPnetrev_ZERO_netrev_gain, digits=1),
          OPnetrev_BK_netrev_gain = round(OPnetrev_BK_netrev_gain, digits=1))
 
 
-#### \\ Printing table ####
+####  Printing table ####
 knitr::kable(results)
 
-#### \\ finishing touches ####
-write_csv(results, path = paste0('../results/tables/tableX_aggregateGains.csv'))
+#### finishing touches ####
+write_csv(results, path = "D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/tables/tableX_aggregateGains.csv")
+
+```
+
+# Percentage of pixels within ranges
+```{r}
+OPnetrev_netrev_cv <-  rast("../results/tif/TZA_OPnetrev_netrev_cv.tif")
+
+
+print(">10")
+sum(values(OPnetrev_netrev_cv)>5, na.rm=TRUE)/sum(values(OPnetrev_netrev_cv)>0, na.rm=TRUE)
+
+hist(values(OPnetrev_netrev_cv))
 
 ```
 
 
-### Figure X: avcr in selected regions
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Percentage of pixels within ranges: Nitrogen amount optimized
+```{r}
+r <-  rast("../results/tif/TZA_OPnetrev_N_kgha.tif")
+sum(values(r)>50 & values(r)<100, na.rm=TRUE)/sum(values(r)>0, na.rm=TRUE)
+hist(values(r))
 
-regions_plot <- c("Arusha", "Dodoma", "Iringa", "Mbeya", "Njombe", "Rukwa")
-
-gadm36_TZA_1 <- read_csv("../data/admin/gadm36_TZA_1.csv") 
-FIDS_plot <- gadm36_TZA_1$FID[match(regions_plot, gadm36_TZA_1$NAME_1)]
-
-#Filtering table of results
-OPnetrev <- read_csv(file = "../results/tables/TZA_OPnetrev.csv") %>% 
-  filter(gadm36_TZA_1 %in% FIDS_plot) %>% 
-  mutate(gadm36_TZA_1 = factor(gadm36_TZA_1, levels=(FIDS_plot)))
-
-p <- ggplot(OPnetrev, aes(x = gadm36_TZA_1, y = avcr )) + 
-  geom_boxplot()  +
-  scale_x_discrete(labels=regions_plot) +
-  labs(x = 'District',
-       y = bquote('avcr')) + 
-  theme_classic()
-print(p)
-
-ggsave(filename = paste0('../results/figures/Figure3_avcr.tif'),
-      plot = p,
-      width = 6, height = 4, units = 'in',
-      device = 'tiff', dpi = 300)
-
-p <- ggplot(OPnetrev, aes(x = gadm36_TZA_1, y = mvcr )) + 
-  geom_boxplot()  +
-  scale_x_discrete(labels=regions_plot) +
-  labs(x = 'District',
-       y = bquote('mvcr')) + 
-  theme_classic()
-print(p)
-
-ggsave(filename = paste0('../results/figures/Figure3_mvcr.tif'),
-      plot = p,
-      width = 6, height = 4, units = 'in',
-      device = 'tiff', dpi = 300)
-
-```
-
-### Figure X: Net revenue variation based on optimal N_kg_ha and variation in observed rainfall (CHIRPS 1981-2018)
-```{r, echo=FALSE, fig.height=4, fig.width=2, fig.cap="Figure X. Predicted net reveues and variation across in Tanzania."}
-knitr::include_graphics('../results/figures/FigureX_netrev_variation.png')
-```
-
-### Figure X: MCVR based on optimal N_kg_ha and variation in observed rainfall (CHIRPS 1981-2018)
-```{r, echo=FALSE, fig.height=2, fig.cap="Figure X. Predicted net revenues and variation across in Tanzania."}
-knitr::include_graphics('../results/figures/FigureX_mvcr.png')
 ```
 

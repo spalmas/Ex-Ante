@@ -1,6 +1,9 @@
 # Simulation of fertilizer application profitability for Tanzania
 
-These scripts are used to predict if N application is profitable in maize farms in Tanzania. Incorporates soil characteristics, maize price predictions, fertilizer price and distance to markets.
+These scripts are used to predict if N application is profitable in maize farms in Tanzania. Incorporating soil characteristics, maize price predictions, fertilizer price and distance to markets.
+
+This code is the basis for the analysis in *Fertilizer profitability for smallholder maize farmers in Tanzania: A spatially-explicit ex ante analysis* submitted to PLOS ONE.
+
 
 ## Code
 

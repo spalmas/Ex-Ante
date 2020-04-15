@@ -61,7 +61,6 @@ maize_price <- warp(maize_price, tza_alt, filename="../data/prices/pred_maize_pr
 maize_price <- raster("../data/prices/pred_maize_price1_USD_5km.tif") %>% projectRaster(crs=crs(tza_alt))
 plot(maize_price, main="Market maize prices in Tanzania")
 points(grump)
-
 ```
 
 
@@ -81,15 +80,16 @@ We then calculate the cost of access of each pixel to the each market. This cost
 1) Calculating time to market
 2) Use the formula of: marketprice(USD/kg) - 0.01(USD/kg/hr) * time to market (hr) to calculate the prices (USD/kg) in each pixel.
 ```{r}
+#transportation cost. This is the rate of decrease from the market to the pixel depending on the time
+tr_cost <- 0.02 #USD/kg/hr
+
 for(point_n in seq_along(grump)){
   #point_n <- 60 # to test
   if(!is.na(raster::extract(raster(trans), grump[point_n,]))){  #there are some points that do not lie within the extent of the data. No idea why
     #time to market in hours
     time_to_market <- accCost(trans, fromCoords=grump[point_n,])/60  
-    #plot(time_to_market)
-    #transportation cost
-    tr_cost <- 0.01 #USD/hr
     
+    #correcting market price depending on tranportation cost to get farmgate price to that market
     farmgate_price <- maize_price_grump[point_n] - time_to_market*tr_cost
     #plot(farmgate_price)
     
@@ -97,12 +97,12 @@ for(point_n in seq_along(grump)){
                 filename=paste0("../data/prices/maize_farmgate_price/maize_farmgate_price_point_n/maize_farmgate_price",point_n,".tif"),
                 overwrite=TRUE)
   }
-  #acc[is.infinite(acc)] <- NA
-  #to convert from m to km
 }
 
 plot(time_to_market, main="Time to market #77 (hr)")
+points(grump[point_n,])
 plot(farmgate_price, main="Farmgate price to market #77 (USD/kg)")
+points(grump[point_n,])
 ```
 
 
@@ -118,9 +118,35 @@ farmgate_prices <- rast(files)
 
 #getting the maximum price
 farmgate_price <- max(farmgate_prices, na.rm=TRUE)
+
+#Negative values are changed to 0
+values(farmgate_price)[values(farmgate_price)<0] <- 0 
+
+#Exporing file
 writeRaster(farmgate_price, filename="../data/prices/maize_farmgate_price/maize_farmgate_price.tif", overwrite=TRUE)
 
+#plotting map
 plot(farmgate_price, main ="Maximum available farm price (USD/ha)")
+```
 
+Below I extract the predicted farmgate prices in the TZAPS survey locations to review the prediction.
+```{r}
+TZAPS <- vect("F:/Work/TAMASA/APS/TZAPS_hhid_coords.shp") %>% 
+  project(crs = crs(tza_alt))
 
+#Extracting the values in selected cities to review data
+TZAPS_farmgate_price <- as.vector(terra::extract(farmgate_price, TZAPS, drop=TRUE))
+hist(TZAPS_farmgate_price)
+```
+Some summary stats for the paper
+```{r}
+farmgate_price <- rast("../data/prices/maize_farmgate_price/maize_farmgate_price.tif")
+
+print("0.2 - 0.4")
+sum(values(farmgate_price)>=0.2 & values(farmgate_price)<=0.4, na.rm=TRUE)/sum(values(farmgate_price)>0, na.rm=TRUE)
+
+print("0.0")
+sum(values(farmgate_price)<0.01, na.rm=TRUE)/sum(values(farmgate_price)>=-1, na.rm=TRUE)
+
+summary(values(N_price))
 ```

@@ -57,9 +57,27 @@ logistic <- function(x){
   return(z)
 }
 
+
+#creating a plot and exporting to a file to use in figure
+
 x <- seq(0,400, 10)
 y <- logistic(x)
-plot(x,y, xlab="Access time to city 50k (min)", ylab="Price multiplier")
+data_trans <- cbind(x,y) %>% as.data.frame()
+
+
+g <- ggplot(data = data_trans, aes(x=x, y=y)) +
+  geom_line() +
+  theme_minimal() +
+  labs(x = "Access time to city 50k (min)",y="Price multiplier")
+g
+
+
+ggsave(filename = paste0('D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/figures/FigX_fertilizer_priceA.tif'),
+      plot = g,
+      width = 90, height = 90, units = 'mm',
+      device = 'tiff', dpi = 300)
+
+
 ```
 
 ## Correction
@@ -70,5 +88,18 @@ N_price <- N_price_average*logistic(acc50k)
 names(N_price) <- "N_price"
 writeRaster(N_price, filename="../data/prices/TZA_N_price.tif", overwrite=TRUE)
 plot(N_price, main="N price (USD/kg)")
+```
+
+Some summary stats for the paper
+```{r}
+N_price <- rast("../data/prices/TZA_N_price.tif")
+
+print("larger then >2.5")
+sum(values(N_price)>2.5, na.rm=TRUE)/sum(values(N_price)>0, na.rm=TRUE)
+
+print("lower than < 1.5")
+sum(values(N_price)<1.5, na.rm=TRUE)/sum(values(N_price)>0, na.rm=TRUE)
+
+summary(values(N_price))
 ```
 

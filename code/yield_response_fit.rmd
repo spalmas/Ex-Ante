@@ -180,11 +180,6 @@ library(pdp)
 pdp::partial(yield.rf, pred.var="TAMSAT_seas_rainfall", plot=TRUE)
 ```
 
-We can save the model to a file and then load it with `readRDS` to use it with another set of predictors.
-```{r}
-saveRDS(yield.rf, "../results/models/yield.rf.rds")
-```
-
 
 ## Random Forest model 2
 In this model, I'll remove many of the predictors that do not have much information about yield. This is to reduce the size of the file that will be used to predict.
@@ -276,6 +271,7 @@ N_kgha_plot <- ggplot(N_kgha_partial, aes(x,y)) +
 ORCDRC_plot <- ggplot(ORCDRC_partial, aes(x,y)) +
   geom_line() +
   labs(x = "Soil Organic carbon (g/kg)", y = "Partial yield (kg/ha)")
+seas_rainfall_plot
 ```
 
 
@@ -297,11 +293,12 @@ yield_fit_plot <- ggplot(data = TZAPS_subset, aes(x = yld, y = pred)) +
   annotate('text', x = 2000, y = 6500, label = paste0("RMSE==", fr2_rmse), parse = TRUE, size=3)  +
   labs(x = "Observed yield (kg/ha)", y = "Predicted yield (kg/ha)") +
   xlim(0, 9000) + ylim(0, 9000)
+yield_fit_plot
 ```
 
 ### Building the figure with the 4 plots
 ```{r}
-figure2 <- ggarrange(seas_rainfall_plot, N_kgha_plot, ORCDRC_plot, yield_fit_plot,
+figure2 <- ggarrange(yield_fit_plot, seas_rainfall_plot, N_kgha_plot, ORCDRC_plot,
                      labels=c("A", "B", "C", "D"),
                      ncol=2, nrow=2)
 figure2
@@ -323,7 +320,9 @@ Because we don't have spatial surfaces of the household variables, we will use t
 The exported table will be used to fill the values in the simulations.
 ```{r}
 hh_summary_stats <- TZAPS_subset %>% 
-  dplyr::select(intercrop, rotat1, manure, cropres, weedings, impseed, fallow3yr, struct, terraced, logha, headage, hhsize, headeduc, year) %>%
+  dplyr::select(yld, N_kgha, intercrop, rotat1, manure, cropres, weedings, impseed, fallow3yr, struct, terraced, logha, headage, hhsize, headeduc, year) %>%
+  mutate(fert_use = N_kgha>0,
+         N_kgha = fert_use * N_kgha) %>% 
   sapply(FUN = function(cl) c(mean=mean(cl,na.rm=TRUE), 
                               sd=sd(cl,na.rm=TRUE))) %>% 
   t() %>% data.frame() %>% rownames_to_column("variable")

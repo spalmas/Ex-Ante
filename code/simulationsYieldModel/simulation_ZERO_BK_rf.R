@@ -89,10 +89,10 @@ BK <- BK %>%
 
 ########## +++++++ EXPORTING RESULTS +++++++ ###############
 #### \\ Keeping only useful columns to reduce size ####
-ZERO <- ZERO %>% select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
+ZERO <- ZERO %>% dplyr::select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
                         N_kgha,
                         yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv)
-BK <- BK %>% select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
+BK <- BK %>% dplyr::select(index, gadm36_TZA_1, spam2010V1r1_global_A_MAIZ_A_TZA,
                     N_kgha,
                     yield_mean, totfertcost, netrev_mean, netrev_sd, netrev_cv,
                     yield_mean_gainPerc, totfertcost_gainPerc, netrev_mean_gainPerc, ap, nue, mp, avcr, mvcr)

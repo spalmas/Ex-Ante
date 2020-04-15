@@ -177,16 +177,14 @@ conductance <- 1/cost
 
 #Creating a transition object 
 trans <- transition(conductance,transitionFunction=mean, directions= 8)
+
+#Because the transition layer is based on a lon-lat projection and covers a large area, it requires geocorrection for map distortion as well as for diagonal connections between grid cells.
+trans <- geoCorrection(trans, type="c")
 ```
 
-Because the transition layer is based on a lon-lat projection and covers a large area, it requires geocorrection for map distortion as well as for diagonal connections between grid cells.
+writing the transition object to use in `maize_price_farmgate.rmd` analysis.
 ```{r}
-trans <- geoCorrection(trans, type="c")
-
-#writing the transition object to use in maize_price_farmgate.rmd analysis.
 save(trans, file="../results/tif/access/transition.rda")
-
-
 ```
 
 With the transition object, we can now calculate access using the `accCost` function and supplying the coordinates from which to calulate.  
