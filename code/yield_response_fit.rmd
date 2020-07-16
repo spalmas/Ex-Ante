@@ -1,6 +1,6 @@
 ---
 title: "Random Forest Prediction of yield response"
-#author: "Sebastian Palmas"
+author: "Sebastian Palmas"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 ---
@@ -61,12 +61,12 @@ summary(lm1)
 ## What about just some of the variables
 With CHIRPS data
 ```{r}
-lm2 <- lm(yld ~ N_kgha  + year + intercrop + rotat1 + manure + cropres + weedings + herbicide_bin + pesticide_bin + impseed + disease + striga + logha + headage + femhead + hhsize + headeduc + srtm_TZA + srtm_slope_TZA + CHIRPS_seas_rainfall, data = TZAPS)
+lm2 <- lm(yld ~ N_kgha + P_kgha  + year + intercrop + rotat1 + manure + cropres + weedings + herbicide_bin + pesticide_bin + impseed + disease + striga + logha + headage + femhead + hhsize + headeduc + srtm_TZA + srtm_slope_TZA + CHIRPS_seas_rainfall, data = TZAPS)
 summary(lm2)
 ```
 With TAMSAT data
 ```{r}
-lm3 <- lm(yld ~ N_kgha  + year + intercrop + rotat1 + manure + cropres + weedings + herbicide_bin + pesticide_bin + impseed + disease + striga + logha + headage + femhead + hhsize + headeduc + srtm_TZA + srtm_slope_TZA + TAMSAT_seas_rainfall, data = TZAPS)
+lm3 <- lm(yld ~ N_kgha + P_kgha + year + intercrop + rotat1 + manure + cropres + weedings + herbicide_bin + pesticide_bin + impseed + disease + striga + logha + headage + femhead + hhsize + headeduc + srtm_TZA + srtm_slope_TZA + TAMSAT_seas_rainfall, data = TZAPS)
 summary(lm3)
 ```
 
@@ -186,7 +186,7 @@ In this model, I'll remove many of the predictors that do not have much informat
 
 ### Select the columns in the model
 ```{r}
-TZAPS_subset <- TZAPS %>% dplyr::select(yld, N_kgha, intercrop, rotat1, manure,
+TZAPS_subset <- TZAPS %>% dplyr::select(yld, N_kgha, P_kgha, intercrop, rotat1, manure,
                                         cropres, weedings, impseed, fallow3yr,
                                         struct, terraced, logha, headage, hhsize,
                                         headeduc, year, srtm_TZA, srtm_slope_TZA,
@@ -302,7 +302,7 @@ figure2 <- ggarrange(yield_fit_plot, seas_rainfall_plot, N_kgha_plot, ORCDRC_plo
                      labels=c("A", "B", "C", "D"),
                      ncol=2, nrow=2)
 figure2
-ggsave(filename = "D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/figures/Fig2_yieldfit.tif",
+ggsave(filename = "C:/Users/palma/Google Drive/TAMASA/Ex-Ante/Manuscript Ex-Ante/figures/Fig3_yieldfit.tif",
        plot = figure2,
        width = 15, height = 15, units = "cm", device = "tiff")
 ```
@@ -318,9 +318,11 @@ save(yield.rf2, file="../data/models/yield.rf2.rda")
 Because we don't have spatial surfaces of the household variables, we will use the mean values of these variables in the TZAPS as constants in the spatial predictions. This code below finds the mean values of the household characteristics found in the TZAPS.
 
 The exported table will be used to fill the values in the simulations.
+
+These are also the values used for Table 2 in Manuscript.
 ```{r}
 hh_summary_stats <- TZAPS_subset %>% 
-  dplyr::select(yld, N_kgha, intercrop, rotat1, manure, cropres, weedings, impseed, fallow3yr, struct, terraced, logha, headage, hhsize, headeduc, year) %>%
+  dplyr::select(yld, N_kgha, P_kgha, intercrop, rotat1, manure, cropres, weedings, impseed, fallow3yr, struct, terraced, logha, headage, hhsize, headeduc, year) %>%
   mutate(fert_use = N_kgha>0,
          N_kgha = fert_use * N_kgha) %>% 
   sapply(FUN = function(cl) c(mean=mean(cl,na.rm=TRUE), 

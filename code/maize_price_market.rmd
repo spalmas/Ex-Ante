@@ -1,6 +1,6 @@
 ---
 title: "Random Forest Prediction of Market Maize Prices"
-#author: "Kevin Oluoch, Sebastian Palmas"
+author: "Sebastian Palmas"
 date:  "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 ---
@@ -184,7 +184,12 @@ predict.vrbs = terra::extract(rasterstack,
                               small=TRUE, 
                               fun = mean)
 
+#remove ID column
+predict.vrbs <- predict.vrbs[,2:55]
+
+#list of complete rows
 predict.vrbs.complete <- complete.cases(predict.vrbs)
+
 
 predict.vrbs <- predict.vrbs[predict.vrbs.complete,]
 ```
@@ -195,7 +200,7 @@ By "tune the forest", we mean the process of determining the optimal number of v
 
 ```{r}
 trf <- tuneRF(x=predict.vrbs, # Prediction variables
-              y=maize.price$maipkg[predict.vrbs.complete] # Responce variable
+              y=maize.price$maipkg[predict.vrbs.complete] # Response variable
               )
 ```
 
@@ -209,7 +214,7 @@ trf <- tuneRF(x=predict.vrbs, # Prediction variables
 We create a model with the `randomForest` function which takes as arguments: the response variable the prediction variables and the optimal number of variables to consider at each split (estimated above). We also get the function to rank the prediction variables based on how much influence they have in the decision-trees' results.
 ```{r}
 price.model <- randomForest(x=predict.vrbs, # Prediction variables
-                            y=maize.price$maipkg[predict.vrbs.complete], # Responce variable
+                            y=maize.price$maipkg[predict.vrbs.complete], # Response variable
                             mtry=mintree, # Number of variables in subset at each split
                             importance = TRUE) # Assess importance of predictors.
 ```
@@ -272,8 +277,8 @@ plot_fitness <- function(obs, pred, name){
   abline(a=0, b=1)
 }
 
-plot_fitness(obs =maize.price$maipkg[predict.vrbs.complete],
-             pred=non.spatial.prediction,
+plot_fitness(obs =maize.price$maipkg[predict.vrbs.complete]/1598,
+             pred=non.spatial.prediction/1598,
              "Fitness")
 
 ```
