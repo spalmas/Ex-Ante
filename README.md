@@ -24,7 +24,7 @@ This code is the basis for the analysis in *Fertilizer profitability for smallho
 * [Results_TablesFigures.rmd](code/Results_TablesFigures.rmd): To create tables and figures for the paper.
 * [run_simulations.sh](code/run_simulations.sh): 
 * [TZAPS_hhid_coords_extract.R](code/TZAPS_hhid_coords_extract.R): to extract covariates from many rasters into a table with the household measurements to use in the yield prediction.
-* [yield_response.R](code/yield_response.R): Previous linear fit model for yield response.
+* [yield_response.R](code/yield_response.R): Deprecated linear fit model for yield response. Superseded by random forest model.
 * [yield_response_fit.rmd](code/yield_response_fit.rmd): To fit a random forest model for yield using multiple covariates.
 
 

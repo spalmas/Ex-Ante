@@ -324,7 +324,7 @@ These are also the values used for Table 2 in Manuscript.
 hh_summary_stats <- TZAPS_subset %>% 
   dplyr::select(yld, N_kgha, P_kgha, intercrop, rotat1, manure, cropres, weedings, impseed, fallow3yr, struct, terraced, logha, headage, hhsize, headeduc, year) %>%
   mutate(fert_use = N_kgha>0,
-         N_kgha = fert_use * N_kgha) %>% 
+         N_kgha = fert_use * N_kgha) %>%
   sapply(FUN = function(cl) c(mean=mean(cl,na.rm=TRUE), 
                               sd=sd(cl,na.rm=TRUE))) %>% 
   t() %>% data.frame() %>% rownames_to_column("variable")

@@ -50,13 +50,12 @@ N_price <- rast("data/prices/TZA_N_price.tif")
 rasters_input <- cbind(rasters_input, values(N_price))
 
 maize_farmgate_price <- rast("data/prices/maize_farmgate_price/maize_farmgate_price.tif")
-maize_farmgate_price <- warp(maize_farmgate_price, srtm_TZA)
 names(maize_farmgate_price) <- "maize_farmgate_price"
 rasters_input <- cbind(rasters_input, values(maize_farmgate_price))
 
-#### ADD ALL RAINFALL VALUES FROM 1981-2019 FROM CHIRPS OR CHIRPS####
+#### ADD ALL RAINFALL VALUES FROM 1981-2019 FROM CHIRPS OR TAMSAT####
 #rainfall_rasters <- list.files("data/rainfall/", pattern = "^chirps.*\\.tif$", full.names = TRUE)
-rainfall_rasters <- list.files("data/rainfall/", pattern = "^rfe.*05.*\\.tif$", full.names = TRUE)  #only those that have a 05 in the filaname (may include those that have 2005 in the name)
+rainfall_rasters <- list.files("data/rainfall/", pattern = "^rfe.*05.*\\.tif$", full.names = TRUE)  #TAMSAT: only those that have a 05 in the filEname (may include those that have 2005 in the name)
 rainfall_rasters <- rainfall_rasters[grep(pattern = "12.*", rainfall_rasters)]  #keeping only those that have 12 in the filename 
 
 seasons <- c()
@@ -116,4 +115,4 @@ dim(rasters_input)
 format(object.size(rasters_input), units="MB")
 
 #### EXPORTING TABLE TO A FILE  ####
-write.table(rasters_input, file="data/TZA_soilprice_table.txt", row.names=FALSE)
+write.table(rasters_input, file="data/soilprice_table.txt", row.names=FALSE)
