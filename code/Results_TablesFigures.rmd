@@ -31,21 +31,6 @@ cbbPalette <- c("#FFFFFF", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"
 
 ```
 
-# Framework
-We developed a spatial framework that integrates biophysical and socio-economic variables over large spatial scales useful for ex-ante impact assessment of technologies. The framework data requirements depend on the models used within it. In this framework, soil nutrient and maximum attainable maize yields maps enter a crop model parameterized to predict maize yield under different fertilization scenarios.
-
-## Yield model
-The yield prediction model 
-
-## Prices
-Using this predicted yield, we calculated the profitability of multiple fertilization scenarios from the crop sale of the predicted yields using the maize prices predictions and substracting the fertilizer price from the scenario fertilizer amount. The simulation uses fertilizer and maize price maps to estimate total fertilization cost and revenue to then estimate the profitability of the maize production.
-
-### Input prices
-For this analysis, we used a price for Nitrogen of 1 USD/kg.
-
-### Output prices
-Using maize prices collected at known markets across Tanzania in 2015, we predicted market prices across Tanzania using predictors such as location, weather elements, soil properties and other variables capturing aspects of market access and population distribution (e.g. distance to main roads, population density. All variables are described in Table A1. We modeled the preduction using a random forest algorithm using R 3.5.1 from the `randomForest` package.
-
 
 The model for maize market price had high fitness with the maize price from known locations (Figure X).
 ```{r, echo=FALSE, warning=FALSE, fig.height=3, fig.width=3,, fig.cap="Figure X. Observed vs predicted maize market prices from a Random Forest model."}
@@ -57,11 +42,11 @@ if(.Platform$OS.type == "unix") {
   maize_price_table <- read.csv("F:/Work/LSMS/TZA/maize_prices_2015/local_maize_prices_2015.csv")
 }
 
-maize_price_vect <- vect( cbind(maize_price_table$lon_modified, maize_price_table$lat_modified), atts=maize_price_table,
-                          crs="+proj=longlat +datum=WGS84 +no_defs")
-maize_price_vect <- terra::project(maize_price_vect, crs=crs(maize_farmgate_price))
+maize_price_vect <- vect(cbind(maize_price_table$lon_modified, maize_price_table$lat_modified), atts=maize_price_table, crs="+proj=longlat +datum=WGS84 +no_defs")
 
-maize_price_table$maize_price_pred <- terra::extract(maize_farmgate_price, maize_price_vect, drop=TRUE)
+maize_price_vect <- terra::project(maize_price_vect, y=crs(maize_farmgate_price))
+
+maize_price_table$maize_price_pred <- terra::extract(maize_farmgate_price, maize_price_vect, drop=TRUE)[,2]
 
 maize_price_table$maipkgUSD_kg <- maize_price_table$maipkg / 1598 #to convert from TZS to USD
 
@@ -84,35 +69,6 @@ print(p)
 ```
 
 
-# Use of framework
-
-## Scenario profitability
-
-To test the profitability of different fertilization scenarios, we simulated four scenarios that represent current and potential investments on nitrogen fertilizer. These scenarios are:
-
-* *ZERO*: No application of nitrogen
-
-* *BK*: Countrywide blanket recommendation (100 N kg/ha)
-
-* *OPyield*: Optimized to get the highest yield
-
-* *OPnetrev*: Optimized to get the highest net revenue
-
-These are some issues with the simulation:
-
-We compared yields, total fertilization costs and predicted revenues from these scenarios. We also compare the average and marginal value cost ratios (AVCR and MVCR). AVCR is the average physical product (quantity of output per unit of variable input for any input level) multiplied by the value-cost ratio. An AVCR value exceeding 1 indicates profitability, while an AVCR value of 2 is often used as a shorthand criterion for economic attractiveness of an investment from the perspective of a risk-averse farmer. MVCR is the marginal physical product (the change in yield deriving from an additional kg/ha of input) and multiplied by the value-cost ratio. An MVCR value exceeding 0 indicates than a risk-neutral farmer should invest more, as marginal returns are still positive. 
-
-
-$$\sf{AVCR}=\displaystyle p_Y*Y/X$$
-where $p_Y$ is the price of output (USD/kg), $Y$ is the yield (kg/ha) and $X$ is the amount of fertilizer used (kg/ha).
-
-$$\sf{MVCR}=\displaystyle \frac{p_y*(Y_F-Y_{F-1})}{p_X(X_F-X_{F-1})}$$
-where $p_Y$ and $p_X$ are the prices of output and input in (USD/kg), $Y_F$ is the yield with fertilizer application (kg/ha) and $Y_{NF}$ is the yield without fertilizer application (kg/ha). $X_F$ and $X_{NF}$ are the amounts of fertilizer used for the two treatments in kg/ha. In this work, the increments of fertilizer are of 1kg/ha, therefore, the MVCR is just:
-$$\sf{MVCR}=\displaystyle \frac{p_y*(Y_F-Y_{F-1})}{p_X}$$
-
-
-All code for the simulation and analysis is openly available https://github.com/spalmas/ex-ante.
-
 
 # Results
 Table X: Summary statistics for yields, total fertilization costs and netrevenues for the different scenarios.
@@ -122,7 +78,7 @@ Table X: Summary statistics for yields, total fertilization costs and netrevenue
 
 ```{r, echo=FALSE, warning=FALSE}
 #Low and high netrev values will bebased on 10 and 90% percenties of the ZERO simulation
-ZERO <- read.csv('../results/tables/TZA_ZERO.csv') 
+ZERO <- read.csv('../results/tables/ZERO_AUE1.csv') 
 
 #Low and high revenue from the ZERO simulation
 low_netrev <- quantile(ZERO$netrev_mean, 0.10, na.rm=TRUE)  #10% percentile of the net revenue. The quantile function does not consider the Inf values.
@@ -138,7 +94,7 @@ columns <- c('Scenario',
              'netrevMin', 'netrevMean', 'netrevMax',
              paste0("Low netrev area % (<$", round(low_netrev), " USD/ha)"),
              paste0("High netrev area % (>$", round(high_netrev), " USD/ha)"))
-ranges <- matrix(nrow = length(scenarios)*2 - 1, ncol = length(columns)) %>% as_tibble()
+ranges <- matrix(nrow = length(scenarios)*2 - 1, ncol = length(columns)) %>% as.data.frame()
 ranges[,1] <- c( 'ZERO','BK', 'OPyield', 'OPnetrev','BK_gainPerc','OPyield_mean_gainPerc','OPnetrev_mean_gainPerc') 
 colnames(ranges) <- columns
 
@@ -147,19 +103,19 @@ r <- 1
 for (s in scenarios){
   #s <- 'ZERO'  #to test
   #### \\ Reading pixel result tables  ####
-  results <- paste0('../results/tables/TZA_',s,'.csv') %>% read.csv()
+  results <- paste0('../results/tables/',s,'_AUE1.csv') %>% read.csv()
   col.start <- 2
   
   #calculating yield, totfertcost and netrevenus values
   for (i in c('yield_mean', 'totfertcost', 'netrev_mean')){
-    #i <- 'netrev'    #to test
+    #i <- 'netrev_mean'    #to test
     #### \\ Removing infinite values ####
     results[is.infinite(results[,i]),i] <- NA
     
     #### \\ Filling table ####
-    ranges[r,col.start:(col.start+2)] <- c(results[,i] %>% min(na.rm = T) %>% round, 
-                                           results[,i] %>% mean(na.rm = T) %>% round,
-                                           results[,i] %>% max(na.rm = T) %>% round)
+    ranges[r,col.start:(col.start+2)] <- c(results[,i] %>% min(na.rm = T) %>% round(),
+                                           results[,i] %>% mean(na.rm = T) %>% round(),
+                                           results[,i] %>% max(na.rm = T) %>% round())
     
     #### \\ Calculating percentage gain distribution from the ZERO scenario ####
     if (s != 'ZERO'){
@@ -182,7 +138,7 @@ knitr::kable(ranges)  #print
 data.table::fwrite(ranges, file = '../results/tables/table1_TZA_Ranges.csv')
 ```
 
-### Yield and net revenue distribution by scenario
+# Boxplot: Yield and net revenue distribution by scenario
 ```{r, echo=FALSE, warning=FALSE, , fig.height=3, fig.width=6}
 scenarios <- c('ZERO', 'BK', 'OPyield', 'OPnetrev')
 values <- tibble()
@@ -190,10 +146,13 @@ values <- tibble()
 for (s in scenarios){
   #s <- 'BK'  #to test
   #### \\ Reading pixel result tables  ####
-  results <- read.csv(paste0('../results/tables/TZA_',s,'.csv'))
+  results <- read.csv(paste0('../results/tables/',s,'_AUE1.csv'))
   value <- cbind.data.frame(s, yield_mean=results$yield_mean)
   values <- rbind(values, value)
 }
+#change order of scenario factors
+values$s <- factor(values$s, levels = scenarios)
+
 
 #Getting the percentage increase labels to add in the plot
 ranges <- read.csv('../results/tables/table1_TZA_Ranges.csv') %>% 
@@ -223,10 +182,12 @@ values <- tibble()
 for (s in scenarios){
   #s <- 'BK'  #to test
   #### \\ Reading pixel result tables  ####
-  results <- paste0('../results/tables/TZA_',s,'.csv') %>% read.csv()
+  results <- paste0('../results/tables/',s,'_AUE1.csv') %>% read.csv()
   value <- cbind.data.frame(s, netrev_mean=results$netrev_mean) %>% as_tibble()
   values <- rbind(values, value)
 }
+#change order of scenario factors
+values$s <- factor(values$s, levels = scenarios)
 
 #Getting the percentage increase labels to add in the plot
 ranges <- read.csv('../results/tables/table1_TZA_Ranges.csv') %>% 
@@ -255,7 +216,7 @@ figureX <- ggarrange(p, r,labels=c("A", "B"),
 figureX
 
 
-ggsave(filename = paste0('D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/figures/Fig4_yield_netrev_boxplot.tif'),
+ggsave(filename = paste0('C:/Users/palma/Google Drive/TAMASA/Ex-Ante/Manuscript Ex-Ante/figures/Fig4_yield_netrev_boxplot.tif'),
       plot = figureX,
       width = 6, height = 3, units = 'in',
       device = 'tiff', dpi = 300)
@@ -271,7 +232,7 @@ values <- tibble()
 for (s in scenarios){
   #s <- 'BK'  #to test
   #### \\ Reading pixel result tables  ####
-  results <- paste0('../results/tables/TZA_',s,'.csv') %>% read.csv()
+  results <- paste0('../results/tables/',s,'_AUE1.csv') %>% read.csv()
   value <- cbind.data.frame(s, yield_mean=results$yield_mean) %>% as_tibble()
   values <- rbind(values, value)
 }
@@ -298,7 +259,7 @@ values <- tibble()
 for (s in scenarios){
   #s <- 'BK'  #to test
   #### \\ Reading pixel result tables  ####
-  results <- paste0('../results/tables/TZA_',s,'.csv') %>% read.csv()
+  results <- paste0('../results/tables/',s,'_AUE1.csv') %>% read.csv()
   value <- cbind.data.frame(s, netrev_mean=results$netrev_mean) %>% as_tibble()
   values <- rbind(values, value)
 }
@@ -324,7 +285,7 @@ This estimate is only areas covered with maize
 
 ```{r, message=FALSE, echo=FALSE, warning=FALSE}
 #Low and high netrev values will bebased on 10 and 90% percenties of the ZERO simulation
-ZERO <- read.csv('../results/tables/TZA_ZERO.csv') 
+ZERO <- read.csv('../results/tables/ZERO_AUE1.csv') 
 high_netrev <- quantile(ZERO$netrev_mean, 0.90, na.rm=TRUE) %>% round()  #90% percentile of the net revenue 
 
 scenarios <- c('ZERO', 'BK', 'OPyield', 'OPnetrev')
@@ -347,7 +308,7 @@ colnames(results) = c('District',
                       paste0('BK (>$', high_netrev ,')'),
                       paste0('OPyield (>$', high_netrev ,')'),
                       paste0('OPnetrev ($', high_netrev ,')'))
-results <- as_tibble(results)
+results <- as.data.frame(results)
 
 #### \\ adding level_1 name ####
 results[1:n_gadm36_TZA_1, 1] <- gadm36_TZA_1$NAME_1[match(FIDS_gadm36_TZA_1, gadm36_TZA_1$FID)] 
@@ -359,7 +320,7 @@ results[1:n_gadm36_TZA_1, 2] <- area_gadm36_TZA_1
 co <- 3  #starting column to store results
 for (s in scenarios){
   #s <- 'ZERO'  #to test
-  pixel_results <- paste0('../results/tables/TZA_', s,'.csv') %>% read.csv()
+  pixel_results <- paste0('../results/tables/', s,'_AUE1.csv') %>% read.csv()
   
   #changing gadm36_TZA_1 to factor characters
   pixel_results$gadm36_TZA_1 <- pixel_results$gadm36_TZA_1 %>% factor()
@@ -388,7 +349,7 @@ write_csv(results, path = paste0('../results/tables/table2_TZA.csv'))
 
 ```
 
-### Table X: Summary table of aggregate gains in net revenue
+### Table 2: Summary table of aggregate gains in net revenue
 ```{r, message=FALSE, echo=FALSE, warning=FALSE}
 #regions of tanzania
 gadm36_TZA_1 <- vect("F:/Work/GADM/gadm36_levels_shp/gadm36_TZA_shp/gadm36_TZA_1.shp")
@@ -398,26 +359,26 @@ results <- data.frame(ID = gadm36_TZA_1$ID, Region = gadm36_TZA_1$NAME_1)
 
 #Rural population
 pop2020 <- rast("F:/Work/WorldPop/Africa/AFR_PPP_2020_adj_v2.tif")
-results$pop2020 <- as.vector(terra::extract(pop2020, gadm36_TZA_1, fun = sum, na.rm=TRUE, drop=TRUE))
+results$pop2020 <- terra::extract(pop2020, gadm36_TZA_1, fun = sum, na.rm=TRUE, drop=TRUE)[,2]
 urban_perc <- readxl::read_xlsx("F:/Work/Tanzania/rural-urban_population/muzzini-WB.xlsx", sheet = "data") %>% select(Region, Statistical) %>% rename(urban_perc = Statistical)
 results <- left_join(results, urban_perc, by = "Region")
 results$rural_pop2020 <- results$pop2020 * (100-results$urban_perc)/100
 
 #SPAM to get the hectares under maize production
 SPAM2010 <- rast("F:/Work/SPAM/spam2010v1r1/spam2010v1r1_global_phys_area.geotiff/spam2010V1r1_global_A_MAIZ_A.tif")
-results$Maize_ha <- as.vector(terra::extract(SPAM2010, gadm36_TZA_1, fun = sum, na.rm=TRUE, drop=TRUE))
+results$Maize_ha <- terra::extract(SPAM2010, gadm36_TZA_1, fun = sum, na.rm=TRUE, drop=TRUE)[,2]
 
 #Expected total returns USD/ha*ha of maize if move from ZERO to OPnetrev and from BK to OPnetrev
-OPnetrev <- read_csv("../results/tables/TZA_OPnetrev.csv")
+OPnetrev <- read_csv("../results/tables/OPnetrev_AUE1.csv")
 
-OPnetrev_ZERO <- read_csv("../results/tables/TZA_ZERO.csv") %>%
+OPnetrev_ZERO <- read_csv("../results/tables/ZERO_AUE1.csv") %>%
   mutate(OPnetrev_ZERO_netrev_gain = OPnetrev$netrev_mean - netrev_mean) %>% 
   group_by(gadm36_TZA_1) %>% #these are from the ID values in the rasterize in preprocess_rasters.sh
   summarise(netrev_gain = mean(OPnetrev_ZERO_netrev_gain)) %>% 
   rename(ID = gadm36_TZA_1)
 results$OPnetrev_ZERO_netrev_gain <- left_join(results, OPnetrev_ZERO, by="ID")$netrev_gain
 
-OPnetrev_BK <- read_csv("../results/tables/TZA_BK.csv") %>% 
+OPnetrev_BK <- read_csv("../results/tables/BK_AUE1.csv") %>% 
   mutate(OPnetrev_BK_netrev_gain = OPnetrev$netrev_mean - netrev_mean) %>% 
   group_by(gadm36_TZA_1) %>% #these are from the ID values in the rasterize in preprocess_rasters.sh
   summarise(netrev_gain = mean(OPnetrev_BK_netrev_gain)) %>% 
@@ -438,13 +399,13 @@ results <- results %>% select(Region, rural_pop2020, Maize_ha, OPnetrev_ZERO_net
 knitr::kable(results)
 
 #### finishing touches ####
-write_csv(results, path = "D:/OneDrive - CGIAR/Ex-Ante/Manuscript Ex-Ante/tables/tableX_aggregateGains.csv")
+write_csv(results, path = "C:/Users/palma/Google Drive/TAMASA/Ex-Ante/Manuscript Ex-Ante/tables/tableX_aggregateGains.csv")
 
 ```
 
 # Percentage of pixels within ranges
 ```{r}
-OPnetrev_netrev_cv <-  rast("../results/tif/TZA_OPnetrev_netrev_cv.tif")
+OPnetrev_netrev_cv <-  rast("../results/tif/OPnetrev_AUE1_netrev_cv.tif")
 
 
 print(">10")
@@ -457,9 +418,101 @@ hist(values(OPnetrev_netrev_cv))
 
 # Percentage of pixels within ranges: Nitrogen amount optimized
 ```{r}
-r <-  rast("../results/tif/TZA_OPnetrev_N_kgha.tif")
+r <-  rast("../results/tif/OPnetrev_AUE1_N_kgha.tif")
 sum(values(r)>50 & values(r)<100, na.rm=TRUE)/sum(values(r)>0, na.rm=TRUE)
 hist(values(r))
+
+```
+
+
+# Comparisson multiple AUE
+Histogram with boxplot óf distrbution of yields and net revenues compared with ZERO
+
+```{r}
+AUES <- c("1", "1.25", "1.5")
+scenarios <- c('BK', 'OPyield', 'OPnetrev')
+values <- tibble()
+
+for (AUE in AUES){
+  for (s in scenarios){
+  #s <- 'BK'  #to test
+  #### \\ Reading pixel result tables  ####
+  ZERO <- paste0('../results/tables/ZERO_AUE', AUE, '.csv') %>% read.csv()
+  results <- paste0('../results/tables/', s, '_AUE', AUE, '.csv') %>% read.csv()
+  value <- cbind.data.frame(s, AUE,
+                            netrev_mean = results$netrev_mean,
+                            netrev_dif=(results$netrev_mean-ZERO$netrev_mean)) %>% as_tibble()
+  values <- rbind(values, value)
+  }
+}
+#change order of scenario factors
+values$s <- factor(values$s, levels = scenarios)
+
+
+p <- ggplot(values, aes(x=s, y=netrev_dif, fill=AUE)) + 
+  geom_boxplot(notch=TRUE,
+               outlier.size = 0.3) +
+  #labs(y="Yield (kg/ha)") +
+  #ylim(0,6000) +
+  #geom_label(data=values, aes(label=label, fill=s), color="black", x=1:4, y=5400)+
+  #annotate("label", label="Average Change", x=3, y=6000)+
+  scale_fill_manual(values=cbbPalette) +
+  theme_minimal()+
+  theme(#legend.position = "none",
+        panel.grid.major.x = element_blank(),
+        axis.title.x=element_blank())
+p
+
+ggsave(filename = paste0('C:/Users/palma/Google Drive/TAMASA/Ex-Ante/Manuscript Ex-Ante/figures/FigX_boxplot_withAUE.tif'),
+       plot = p,
+       width = 3, height = 4, units = 'in',
+       device = 'tiff', dpi = 300)
+
+
+```
+
+
+
+Cumulative distribution
+
+```{r}
+AUES <- c("1", "1.25", "1.5")
+values <- tibble()
+
+for (AUE in AUES){
+  #s <- 'BK'  #to test
+  #### \\ Reading pixel result tables  ####
+  ZERO <- paste0('../results/tables/ZERO_AUE', AUE, '.csv') %>% read.csv()
+  results <- paste0('../results/tables/BK_AUE', AUE, '.csv') %>% read.csv()
+  value <- cbind.data.frame(AUE, 
+                            netrev_mean = results$netrev_mean,
+                            netrev_dif=(results$netrev_mean-ZERO$netrev_mean)) %>% as_tibble()
+  values <- rbind(values, value)
+}
+
+
+p <- ggplot(values, aes(x=netrev_dif)) +
+  stat_ecdf(aes(colour=AUE)) +
+  geom_vline(xintercept=0, linetype=3)+
+  xlim(-250, 1000)+
+  scale_fill_manual(values=cbbPalette) +
+  xlab("BK Net revenue difference from ZERO (USD/ha)") +
+  ylab(bquote('Density')) +
+  theme_minimal()+
+  scale_colour_grey() +
+  theme(legend.position="top",
+        #legend.title = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+print(p)
+
+
+ggsave(filename = paste0('C:/Users/palma/Google Drive/TAMASA/Ex-Ante/Manuscript Ex-Ante/figures/FigX_cumulative_distribution.tif'),
+       plot = p,
+       width = 4, height = 4, units = 'in',
+       device = 'tiff', dpi = 300)
+
 
 ```
 

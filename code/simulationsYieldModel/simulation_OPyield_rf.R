@@ -7,6 +7,7 @@ gc()
 #### +++++++ PACKAGES +++++++ ####
 library(dplyr)
 library(magrittr)
+
 library(nloptr)  #for optimization algorithm
 #library(parallel)
 library(randomForest)
@@ -18,9 +19,6 @@ source("code/buildraster.R")
 source("code/fertilizer_prof_measures.R")
 load("data/models/yield.rf2.rda")  #loading random forest model. `load` has less problems than `readRDS` that I think changes the file somehow
 
-#### +++++++ TIMING +++++++ ####
-t0 <- Sys.time()
-print(t0)
 
 ########## \\The simulations will use multiple AUE values to test sensitivity###############
 AUES <- c(1, 1.25, 1.5)
@@ -28,6 +26,10 @@ AUES <- c(1, 1.25, 1.5)
 for (AUE in AUES){
   #AUE <- 1.5  #to test
   print(paste0("AUE: ", AUE))
+  
+  #### +++++++ TIMING +++++++ ####
+  t0 <- Sys.time()
+  print(t0)
   
   #### +++++++ TABLE OF PIXEL VALUES +++++++ ####
   OPyield <- read.table("data/soilprice_table.txt", header=TRUE, sep=" ")
