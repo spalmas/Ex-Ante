@@ -422,6 +422,9 @@ r <-  rast("../results/tif/OPnetrev_AUE1_N_kgha.tif")
 sum(values(r)>50 & values(r)<100, na.rm=TRUE)/sum(values(r)>0, na.rm=TRUE)
 hist(values(r))
 
+sum(values(r)>100, na.rm=TRUE)/sum(values(r)>0, na.rm=TRUE)
+
+
 ```
 
 
@@ -473,7 +476,22 @@ ggsave(filename = paste0('C:/Users/palma/Google Drive/TAMASA/Ex-Ante/Manuscript 
 
 
 
-Cumulative distribution
+Cumulative distribution table
+
+```{r}
+BK1 <- paste0('../results/tables/BK_AUE1.csv') %>% read.csv()
+BK1.25 <- paste0('../results/tables/BK_AUE1.25.csv') %>% read.csv()
+BK1.5 <- paste0('../results/tables/BK_AUE1.5.csv') %>% read.csv()
+
+
+print("percenrage of pixels with netrev > 100")
+print(paste0("BK1: ", sum(BK1$netrev_mean>300)/nrow(BK1)))
+print(paste0("BK1.25: ", sum(BK1.25$netrev_mean>300)/nrow(BK1.25)))
+print(paste0("BK1.5: ", sum(BK1.5$netrev_mean>300)/nrow(BK1.5)))
+
+```
+
+Cumulative distribution plot
 
 ```{r}
 AUES <- c("1", "1.25", "1.5")

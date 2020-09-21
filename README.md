@@ -2,7 +2,7 @@
 
 These scripts are used to predict if N application is profitable in maize farms in Tanzania. Incorporating soil characteristics, maize price predictions, fertilizer price and distance to markets.
 
-This code is the basis for the analysis in *Fertilizer profitability for smallholder maize farmers in Tanzania: A spatially-explicit ex ante analysis* submitted to PLOS ONE.
+This code is the basis for the analysis in: Palmas S, Chamberlin J (2020) Fertilizer profitability for smallholder maize farmers in Tanzania: A spatially-explicit *ex ante* analysis. PLoS ONE 15(9):e0239149. https://doi.org/10.1371/journal.pone.0239149
 
 
 ## Code
